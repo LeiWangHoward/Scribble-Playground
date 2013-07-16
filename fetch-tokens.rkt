@@ -35,10 +35,12 @@
     (send txt classify-position x)))
 
 ;;is-at-sign: check if the given position is an @: text position[natural] -> #t/#f
-(define (is-at-sign txt posi)
-  (if (equal? (send txt classify-position posi) 'parenthesis)
-      (equal? (send txt classify-position (add1 posi)) 'symbol)
-      #f))
+(define (is-at-sign? txt posi)
+  (and (equal? (send txt classify-position posi) 'parenthesis)
+       (let-values ([(start end) (send txt get-token-range posi)])
+         (and (equal? start posi)
+              (equal? end (+ posi 1))))
+       (equal? #\@ (send txt get-character posi))))
 
 ;;is-parenthesis: check if given position is a parenthesis
 (define (is-parenthesis txt posi)
@@ -52,7 +54,7 @@
          [para_start_skip_space (send txt skip-whitespace para_start 'forward #t)];skip comment also
          [current_space (- para_start_skip_space para_start)];; current already have space
          [para_end (send txt paragraph-end-position current_para)])
-    (if (is-at-sign txt para_start_skip_space);if the biginning is not an @, just return #f
+    (if (is-at-sign? txt para_start_skip_space);if the biginning is not an @, just return #f
         (- 1 current_space)
         #f)))
 ;(send txt get-token-range 0)
@@ -80,44 +82,48 @@
 ;; paragraph-start-position (method of text%)  provided from racket/gui/base, racket/gui
 ;(send txt2 paragraph-start-position 0)
 
-;;test cases
-(require plai)
-(define txt_1 (new racket:text%))
-(send txt_1 insert "#lang scribble/base\n@f{x}")
-(define txt_2 (new racket:text%))
-(send txt_2 insert "#lang scribble/base\n@f{\n @a\n@b\n}")
-(define txt_3 (new racket:text%))
-(send txt_3 insert "#lang scribble/base\n@f[;what\n x\n]")
-(define txt_4 (new racket:text%))
-(send txt_4 insert "#lang scribble/base\n@itemlist[@item{item1}\n
-                                                   @item{item2}\n]")
-;(color:get-parenthesis-colors-table)
-(txt-position-classify txt_4)
 (module+ test
-  ;for fun
-  (test (send txt_4 backward-match 35 0) 31) ;;not sure about "cutoff"
-  (test (send txt_4 forward-match 29 999) 53) ;;not working properly on different lines? 
-  (test (send txt_2 forward-match 22 0) #f) 
-  (test (send txt_4 forward-match 31 0) 35)
-  (test (send txt_4 forward-match 43 0) 96) ;; the whole thing is a string?????????
-  (test (send txt_4 backward-containing-sexp 29 0) 0);;start from #lang???????
-  (test (send txt_4 backward-containing-sexp 35 0) 30);;@item{item1}
+  (require rackunit)
+  
+  (define txt_1 (new racket:text%))
+  (send txt_1 insert "#lang scribble/base\n@f{x}")
+  (define txt_2 (new racket:text%))
+  (send txt_2 insert "#lang scribble/base\n@f{\n @a\n@b\n}")
+  (define txt_3 (new racket:text%))
+  (send txt_3 insert "#lang scribble/base\n@f[;what\n x\n]")
+  (define txt_4 (new racket:text%))
+  (send txt_4 insert "#lang scribble/base\n@itemlist[@item{item1}\n@item{item2}\n]")
+  
+  (check-equal? (send txt_4 backward-match 35 0) 31) ;;not sure about "cutoff"
+  (check-equal? (send txt_4 forward-match 29 100) 57) ;;not working properly on different lines? 
+  (check-equal? (send txt_2 forward-match 22 0) #f) 
+  (check-equal? (send txt_4 forward-match 31 0) 35)
+  (check-equal? (send txt_4 forward-match 43 0) 44) ;; the whole thing is a string????
+  (check-equal? (send txt_4 backward-containing-sexp 29 0) 0);;start from #lang???
+  (check-equal? (send txt_4 backward-containing-sexp 35 0) 30);;@item{item1}
   ;test is-at-sign is-parenthesis
-  (test (is-at-sign txt_1 20) #t)
-  (test (is-at-sign txt_1 22) #f)
-  (test (is-parenthesis txt_1 22) #t)
-  (test (is-parenthesis txt_1 23) #f)
+  (check-equal? (is-at-sign? txt_1 20) #t)
+  (check-equal? (is-at-sign? txt_1 22) #f)
+  (check-equal? (is-parenthesis txt_1 22) #t)
+  (check-equal? (is-parenthesis txt_1 23) #f)
   ;test skip-white-space
-  (test (send txt_2 skip-whitespace 23 'forward #t) 25)
+  (check-equal? (send txt_2 skip-whitespace 23 'forward #t) 25)
   ;test determine-spaces
-  (test (determine-spaces txt_1 15) #f)
-  (test (determine-spaces txt_1 21) #f)
-  (test (determine-spaces txt_2 25) 1)
-  (test (determine-spaces txt_2 28) 1)
-  (test (determine-spaces txt_4 22) #f)
-  (test (determine-spaces txt_4 43) 10))
+  (check-equal? (determine-spaces txt_1 15) #f)
+  (check-equal? (determine-spaces txt_1 21) #f)
+  (check-equal? (determine-spaces txt_2 25) 1)
+  (check-equal? (determine-spaces txt_2 28) 1)
+  (check-equal? (determine-spaces txt_4 22) #f)
+  (check-equal? (determine-spaces txt_4 43) 10)
+  
 ;;first test: able to process string correctly
-#|(test (txt-position-classify (space-filter-inserter txt2))  
+#|(check-equal? (txt-position-classify (space-filter-inserter txt2))  
         '(other other other other other other other other other other 
                 other other other other other other other other other ;;19 other, represents #lang...
                 parenthesis symbol parenthesis white-space string parenthesis))|#
+  
+  
+  (check-equal? (let ([t (new racket:text%)])
+                  (send t insert "(x)")
+                  (is-at-sign? t 0))
+                #f))
