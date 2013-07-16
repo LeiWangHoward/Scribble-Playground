@@ -1,22 +1,4 @@
 #lang racket
-#|
-(require syntax-color/scribble-lexer)
-(define (get-them port)
-  (let loop ([mode #f])
-    (define-values (str/eof token-symbol paren start end backup-dist new-mode)
-      (scribble-inside-lexer port 0 mode))
-    (cond
-      [(eof-object? str/eof) '()]
-      [else (cons (list str/eof token-symbol) (loop new-mode))])))
-
-(define sp (open-input-file "mouse.scrbl"))
-(read-line sp)
-(read-line sp)
-(read-line sp)
-
-(get-them (open-input-string "@f{x}"))
-|#
-
 #|simple result
 1)function "tab adjusted"
 
@@ -35,7 +17,7 @@
 
 (define txt (new racket:text%))
 (send txt insert "#lang scribble/base\n@itemlist[@item{item1}\n
-                                @item{item2");#lang scribble/base\n@f{x}")
+                                @item{item2}\n]");#lang scribble/base\n@f{x}")
 
 ;;first basic position classify method
 (define (txt-position-classify txt)
@@ -77,4 +59,7 @@ after adjusted|#
 (require plai)
 (module+ test
   ;;first test: able to process string correctly
-  (test (txt-position-classify (space-filter-inserter txt2))  '(other other other other other other other other other other other other other other other other other other other parenthesis symbol parenthesis white-space string parenthesis)))
+  (test (txt-position-classify (space-filter-inserter txt2))  
+        '(other other other other other other other other other other 
+                other other other other other other other other other ;;19 other, represents #lang...
+                parenthesis symbol parenthesis white-space string parenthesis)))
