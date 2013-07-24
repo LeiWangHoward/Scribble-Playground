@@ -44,8 +44,8 @@
          [para_start (send txt paragraph-start-position current_para)]
          [para_start_skip_space (send txt skip-whitespace para_start 'forward #t)];skip comment also
          [txt_length (send txt last-position)]
-         [para_end (send txt paragraph-end-position current_para)]
-         [prev_paren_posi (send txt backward-containing-sexp para_start_skip_space para_end)])
+         ;[para_end (send txt paragraph-end-position current_para)]
+         [prev_paren_posi (send txt backward-containing-sexp para_start_skip_space txt_length)])
     (if prev_paren_posi
         (let ((specific_posi (sub1 prev_paren_posi)))
           (cond ((equal? #\[ (send txt get-character specific_posi))
@@ -104,6 +104,9 @@
       (check-equal? (is-at-sign? txt_1 22) #f)
       ;test skip-white-space
       (check-equal? (send txt_2 skip-whitespace 23 'forward #t) 25)
+      ;test counting 0/1? 0!
+      (check-equal? (send txt_1 get-character 20) #\@)
+      (check-equal? (send txt_1 get-character 21) #\f)
       ;test determine-spaces
       (check-equal? (determine-spaces txt_1 15) #f)
       (check-equal? (determine-spaces txt_1 21) #f)
