@@ -32,28 +32,24 @@
               (equal? end (+ posi 1))))
        (equal? #\@ (send txt get-character posi))))
 
-;;match-first-paren: find the position of first parenthesis after the given position: 
-;text position[natural] txt-length -> position[natural]
-(define (match-first-paren txt posi txt-length)
-  ;(if (equal? (send txt classify-position posi) 'parenthesis)
-  ;    (not (is-at-sign? txt posi))
-  #t)
-;;determine-spaces : text position[natural] -> spaces @ front or #f
+;;determine-spaces : text position[natural] -> spaces in front of current paragraph
 (define (determine-spaces txt posi)
   (let* ([current_para (send txt position-paragraph posi)]
          [para_start (send txt paragraph-start-position current_para)]
          [para_start_skip_space (send txt skip-whitespace para_start 'forward #t)];skip comment also
          [txt_length (send txt last-position)]
          ;[para_end (send txt paragraph-end-position current_para)]
-         [prev_paren_posi (send txt backward-containing-sexp para_start_skip_space txt_length)])
-    (if prev_paren_posi
-        (let ((specific_posi (sub1 prev_paren_posi)))
-          (cond ((equal? #\[ (send txt get-character specific_posi))
-                 (let* ((this_para_num (send txt position-paragraph specific_posi))
+         [sexp_start_posi (send txt backward-containing-sexp para_start_skip_space txt_length)])
+    (if sexp_start_posi
+        (let ((prev_posi (sub1 sexp_start_posi)))
+          ;(displayln specific_posi)
+          ;(displayln (send txt get-character specific_posi))
+          (cond ((equal? #\[ (send txt get-character prev_posi))
+                 (let* ((this_para_num (send txt position-paragraph prev_posi))
                         (para_start (send txt paragraph-start-position this_para_num)))
-                   (- specific_posi para_start)))
+                   (- prev_posi para_start)))
                 (else 1)))
-        #f)))
+        sexp_start_posi)))
 ;load-file
 ;;note 1: blank lines/comments cause the skip-space position larger than paragraph end position
 ;;note 2: load file and save file
@@ -102,9 +98,7 @@
                     #f)
       (check-equal? (is-at-sign? txt_1 20) #t)
       (check-equal? (is-at-sign? txt_1 22) #f)
-      ;test skip-white-space
-      (check-equal? (send txt_2 skip-whitespace 23 'forward #t) 25)
-      ;test counting 0/1? 0!
+      ;test counting 0/1? conting starts from 0
       (check-equal? (send txt_1 get-character 20) #\@)
       (check-equal? (send txt_1 get-character 21) #\f)
       ;test determine-spaces
@@ -113,7 +107,8 @@
       (check-equal? (determine-spaces txt_2 25) 1)
       (check-equal? (determine-spaces txt_2 28) 1)
       (check-equal? (determine-spaces txt_4 22) #f)
-      (check-equal? (determine-spaces txt_4 43) 10))
+      (check-equal? (determine-spaces txt_4 44) 10)
+      (check-equal? (determine-spaces txt_5 44) 10));43
       
       ;;first test: able to process string correctly
       #|(check-equal? (txt-position-classify (space-filter-inserter txt2))  
