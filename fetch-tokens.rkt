@@ -39,7 +39,7 @@
          [para-start-skip-space (send txt skip-whitespace para-start 'forward #t)];skip comment also
          [txt-length (send txt last-position)]
          ;[para_end (send txt paragraph-end-position current_para)]
-         [sexp-start-posi (send txt backward-containing-sexp para-start-skip-space txt-length)])
+         [sexp-start-posi (send txt backward-containing-sexp para-start-skip-space 0)])
     (if sexp-start-posi
         (let* ((prev-posi (sub1 sexp-start-posi))
                (this-para (send txt position-paragraph prev-posi)))
@@ -52,10 +52,30 @@
                        0
                        (add1 (- prev-posi this-para-start)))))
                 (else 1)))
-        (begin
-          (displayln (send txt get-character para-start-skip-space))
-          sexp-start-posi))))
-;load-file
+        ;(begin
+        ;  (displayln (send txt get-character para-start-skip-space))
+          sexp-start-posi)))
+
+(define (reindent-and-save in outs)
+  (define t (new racket:text%))
+  (send t load-file in)
+  (send t set-filename #f)
+  (indent-all t)
+  (call-with-output-file outs
+    (λ (port)
+      (display (send t get-text) port))
+    #:exists 'truncate))
+
+(define (indent-all t)
+  (for ([i (in-range (send t last-paragraph) -1 -1)]);counting down from the last paragraph
+    (define posi (send t paragraph-start-position i))
+    (define amount (determine-spaces t posi))
+    (adjust-spaces t i amount)))
+
+(define (adjust-spaces t para amount)
+  #t);;delete and insert
+
+(reindent-and-save (collection-file-path "interface-essentials.scrbl" "scribblings" "drracket") "x.scrbl")
 ;;note 1: blank lines/comments cause the skip-space position larger than paragraph end position
 ;;note 2: load file and save file
 ;;note 3: counting parens
@@ -111,16 +131,18 @@
   
   (define txt_4 (new racket:text%))
   (send txt_4 insert "#lang scribble/base\n@itemlist[@item{item1}\n@item{item2}\n]")
+  ;;(itemlist (item "item1") (item "item2"))
   (check-equal? (determine-spaces txt_4 22) #f)
   (check-equal? (determine-spaces txt_4 44) 10)
   
   (define txt_5 (new racket:text%))
   (send txt_5 insert "#lang scribble/base\n@boldlist{@me{item1}\n@me{item2}\n}")
-  (check-equal? (determine-spaces txt_5 31) 10)
-  (check-equal? (determine-spaces txt_5 46) 10);43
+  (check-equal? (determine-spaces txt_5 31) #f)
+  (check-equal? (determine-spaces txt_5 46) 1);;
   
   ;;first test: able to process string correctly
-  #|(check-equal? (txt-position-classify (space-filter-inserter txt2))  
+  ;(check-equal? (send txt_4 last-position) 57)
+  #|(check-equal? (txt-position-classify (txt-position-classify txt_2))  
         '(other other other other other other other other other other 
                 other other other other other other other other other ;;19 other, represents #lang...
                 parenthesis symbol parenthesis white-space string parenthesis))|#
@@ -133,8 +155,13 @@
   (check-equal? (send txt_4 backward-containing-sexp 29 0) 0);;start from #lang???
   (check-equal? (send txt_4 backward-containing-sexp 35 0) 30);;[@item{item1}
   |#
-  (check-equal? (send txt_5 backward-containing-sexp 30 100) 30)
-  (check-equal? (send txt_4 backward-containing-sexp 43 100) 30);;[.....@item{item2}
+  #|
+  (define txt_6 (new racket:text%))
+  (send txt_6 insert "#lang racket\n(define (me)\n(let ((a 1))\n(b (c 1)\n(d 2))))")
+  (check-equal? (send txt_6 backward-containing-sexp 46 100) 43)
+  (check-equal? (send txt_6 backward-containing-sexp 40 100) 40)
+  (check-equal? (send txt_6 backward-containing-sexp 42 100) 40)
+  
   (check-equal? (send txt_4 backward-containing-sexp 29 (send txt_4 last-position)) #f);;[@item...
   
   (check-equal? (send txt_5 backward-containing-sexp 33 (send txt_5 last-position)) 30);;@me{item
@@ -143,5 +170,5 @@
   
   ;(check-equal? (let-values ([(start end)(send txt_1 get-token-range 22)]) end) 23);based on paragraph
   
-  ;(check-equal? (send txt_1 forward-match 22 100) 25) 
+  ;(check-equal? (send txt_1 forward-match 22 100) 25) |#
   )
