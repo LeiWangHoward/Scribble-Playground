@@ -2,7 +2,9 @@ Scribble-Playground
 ===================
 
 Research focus on indentation of Scribble language
-New task(week 4)
+
+New task(week 4):
+
 	-/racket/pkgs/gui-pkgs/gui-lib/framework/private
 	
 	-emacs("break" lines)
