@@ -40,7 +40,7 @@
          [para-check (send txt position-paragraph para-start-skip-space)])
     ;[txt-length (send txt last-position)]
     ;[para_end (send txt paragraph-end-position current_para)]
-    (if (= para-check current-para);not a empty paragraph
+    (if (= para-check current-para);not an empty paragraph
         (let ([sexp-start-posi (send txt backward-containing-sexp para-start-skip-space 0)])
           (if sexp-start-posi
               (let* ((prev-posi (sub1 sexp-start-posi))
@@ -53,6 +53,10 @@
                          (if (= current-para this-para)
                              0
                              (add1 (- prev-posi this-para-start)))))
+                      ;;if it is a racket function
+                      ((and (equal? #\( (send txt get-character prev-posi))
+                            (equal? #\@ (send txt get-character (- prev-posi 1))))
+                       #f);call corresponding function
                       (else 1)))  
               sexp-start-posi))
         #f)))
@@ -82,7 +86,7 @@
       (send t insert (make-string amount #\ ) posi))) 
   #t);;delete and insert
 
-;(reindent-and-save (collection-file-path "interface-essentials.scrbl" "scribblings" "drracket") "x.scrbl")
+;(reindent-and-save (collection-file-path "interface-essentials.scrbl" "scribblings" "drracket") "x_auto.scrbl")
 ;;note 1: blank lines/comments cause the skip-space position larger than paragraph end position
 ;;note 2: load file and save file
 ;;note 3: counting parens
@@ -152,6 +156,10 @@
   (check-equal? (determine-spaces txt_6 16) #f)
   (check-equal? (determine-spaces txt_6 17) #f);empty line!
   (check-equal? (determine-spaces txt_6 18) 1)
+  
+  (define txt_7 (new racket:text%))
+  (send txt_7 insert "@(define (foo . a)\n(bar b))")
+  (check-equal? (determine-spaces txt_7 19) #f)
   ;;first test: able to process string correctly
   ;(check-equal? (send txt_4 last-position) 57)
   #|(check-equal? (txt-position-classify (txt-position-classify txt_2))  
@@ -183,7 +191,7 @@
   ;(check-equal? (let-values ([(start end)(send txt_1 get-token-range 22)]) end) 23);based on paragraph
   
   ;(check-equal? (send txt_1 forward-match 22 100) 25) |#
-  (check-equal? (let ([t (new racket:text%)])
+  #|(check-equal? (let ([t (new racket:text%)])
                   (send t insert "  (niubi)")
                   (send t delete 0 2)
                   (send t get-character 0))
@@ -193,6 +201,5 @@
                   (send t2 insert "  " 0)
                   (send t2 get-character 3))
                 '#\w)
-  (check-equal? (make-string 3 #\ ) "   ")
-  ;(check-equal? (begin (indent-all txt_4) (txt-position-classify txt_4)) "")
+  (check-equal? (make-string 3 #\ ) "   ")|#
   )
