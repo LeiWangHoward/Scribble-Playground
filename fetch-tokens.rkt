@@ -51,10 +51,8 @@
                    (if (= current-para this-para)
                        0
                        (add1 (- prev-posi this-para-start)))))
-                (else 1)))
-        ;(begin
-        ;  (displayln (send txt get-character para-start-skip-space))
-          sexp-start-posi)))
+                (else 1)))  
+        sexp-start-posi)))
 
 (define (reindent-and-save in outs)
   (define t (new racket:text%))
@@ -70,12 +68,18 @@
   (for ([i (in-range (send t last-paragraph) -1 -1)]);counting down from the last paragraph
     (define posi (send t paragraph-start-position i))
     (define amount (determine-spaces t posi))
-    (adjust-spaces t i amount)))
+    (adjust-spaces t i amount posi)))
 
-(define (adjust-spaces t para amount)
+(define (adjust-spaces t para amount posi)
+  (define posi-skip-space (send t skip-whitespace posi 'forward #f));not skip comments
+  (define origin-amount (- posi-skip-space posi))
+  (when amount
+    (send t delete posi posi-skip-space)
+    (when (> amount 0)
+      (send t insert (make-string amount #\ ) posi))) 
   #t);;delete and insert
 
-(reindent-and-save (collection-file-path "interface-essentials.scrbl" "scribblings" "drracket") "x.scrbl")
+;(reindent-and-save (collection-file-path "interface-essentials.scrbl" "scribblings" "drracket") "x.scrbl")
 ;;note 1: blank lines/comments cause the skip-space position larger than paragraph end position
 ;;note 2: load file and save file
 ;;note 3: counting parens
@@ -171,4 +175,16 @@
   ;(check-equal? (let-values ([(start end)(send txt_1 get-token-range 22)]) end) 23);based on paragraph
   
   ;(check-equal? (send txt_1 forward-match 22 100) 25) |#
+  (check-equal? (let ([t (new racket:text%)])
+                  (send t insert "  (niubi)")
+                  (send t delete 0 2)
+                  (send t get-character 0))
+                '#\()
+  (check-equal? (let ([t2 (new racket:text%)])
+                  (send t2 insert " woshishui")
+                  (send t2 insert "  " 0)
+                  (send t2 get-character 3))
+                '#\w)
+  (check-equal? (make-string 3 #\ ) "   ")
+  ;(check-equal? (begin (indent-all txt_4) (txt-position-classify txt_4)) "")
   )
