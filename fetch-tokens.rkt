@@ -37,22 +37,25 @@
   (let* ([current-para (send txt position-paragraph posi)]
          [para-start (send txt paragraph-start-position current-para)]
          [para-start-skip-space (send txt skip-whitespace para-start 'forward #t)];skip comment also
-         [txt-length (send txt last-position)]
-         ;[para_end (send txt paragraph-end-position current_para)]
-         [sexp-start-posi (send txt backward-containing-sexp para-start-skip-space 0)])
-    (if sexp-start-posi
-        (let* ((prev-posi (sub1 sexp-start-posi))
-               (this-para (send txt position-paragraph prev-posi)))
-          ;(displayln txt_length)
-          ;(displayln sexp-start-posi)
-          ;(displayln (send txt get-character sexp-start-posi))
-          (cond ((equal? #\[ (send txt get-character prev-posi))
-                 (let ((this-para-start (send txt paragraph-start-position this-para)))
-                   (if (= current-para this-para)
-                       0
-                       (add1 (- prev-posi this-para-start)))))
-                (else 1)))  
-        sexp-start-posi)))
+         [para-check (send txt position-paragraph para-start-skip-space)])
+    ;[txt-length (send txt last-position)]
+    ;[para_end (send txt paragraph-end-position current_para)]
+    (if (= para-check current-para);not a empty paragraph
+        (let ([sexp-start-posi (send txt backward-containing-sexp para-start-skip-space 0)])
+          (if sexp-start-posi
+              (let* ((prev-posi (sub1 sexp-start-posi))
+                     (this-para (send txt position-paragraph prev-posi)))
+                ;(displayln txt_length)
+                ;(displayln sexp-start-posi)
+                ;(displayln (send txt get-character sexp-start-posi))
+                (cond ((equal? #\[ (send txt get-character prev-posi))
+                       (let ((this-para-start (send txt paragraph-start-position this-para)))
+                         (if (= current-para this-para)
+                             0
+                             (add1 (- prev-posi this-para-start)))))
+                      (else 1)))  
+              sexp-start-posi))
+        #f)))
 
 (define (reindent-and-save in outs)
   (define t (new racket:text%))
@@ -144,6 +147,11 @@
   (check-equal? (determine-spaces txt_5 31) #f)
   (check-equal? (determine-spaces txt_5 46) 1);;
   
+  (define txt_6 (new racket:text%))
+  (send txt_6 insert "@list{@me{item1}\n\n@me{item2}\n}")
+  (check-equal? (determine-spaces txt_6 16) #f)
+  (check-equal? (determine-spaces txt_6 17) #f);empty line!
+  (check-equal? (determine-spaces txt_6 18) 1)
   ;;first test: able to process string correctly
   ;(check-equal? (send txt_4 last-position) 57)
   #|(check-equal? (txt-position-classify (txt-position-classify txt_2))  
