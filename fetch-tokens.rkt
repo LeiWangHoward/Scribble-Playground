@@ -32,7 +32,18 @@
               (equal? end (+ posi 1))))
        (equal? #\@ (send txt get-character posi))))
 
-;;count-parens: text position[natural](current paren position) ->  number of parens including current one
+;;indent-racket-func: text position[natural] ->  1 for first #\(, or #f
+(define (indent-racket-func txt posi)
+  (let* ([prev-posi (sub1 posi)]
+         [back-one-level (send txt backward-containing-sexp prev-posi 0)])
+    (if back-one-level
+        (let ([paren (sub1 back-one-level)])
+          (if (or (equal? #\{ (send txt get-character paren))
+                  (equal? #\[ (send txt get-character paren)))
+              1
+              #f))
+        #f)))
+;;count-parens: text position[natural] ->  number of parens including current one
 (define (count-parens txt posi)
   (define count 0)
   (do ([p posi (send txt backward-containing-sexp p 0)])
@@ -44,24 +55,7 @@
       (when (or (equal? #\{ (send txt get-character p))
                 (equal? #\[ (send txt get-character p)))
         (set! count (add1 count))))))
-#|(define p posi)
-  (define number 1)
-  (for/fold ([count 1])
-    ;[p (send txt backward-containing-sexp p 0)])
-    ([i (in-range (send txt last-position))])
-    #:break (not p)
-    (begin;let ([prev-posi (sub1 p)])
-      (set! p (sub1 (send txt backward-containing-sexp p 0)))
-      (displayln (send txt get-character p))
-      (displayln p)
-      (displayln count)
-      (when (or (equal? #\{ (send txt get-character p))
-                (equal? #\[ (send txt get-character p)))
-        (begin (add1 count)
-               (set! number count)))))
-  number)|#
-;;(let* ([p (send txt backward-containing-sexp p 0)]
-;;(displayln posi)))
+
 ;;determine-spaces : text position[natural] -> spaces in front of current paragraph
 (define (determine-spaces txt posi)
   (let* ([current-para (send txt position-paragraph posi)]
@@ -83,9 +77,8 @@
                              0
                              (add1 (- prev-posi this-para-start)))))
                       ;;if it is a racket function
-                      ((and (equal? #\( (send txt get-character prev-posi))
-                            (equal? #\@ (send txt get-character (- prev-posi 1))))
-                       #f);call corresponding function
+                      ((equal? #\( (send txt get-character prev-posi))
+                       (indent-racket-func txt prev-posi));call corresponding function
                       (else (count-parens txt sexp-start-posi))))  
               sexp-start-posi))
         #f)))
@@ -115,7 +108,7 @@
       (send t insert (make-string amount #\ ) posi))) 
   #t);;delete and insert
 
-;(reindent-and-save (collection-file-path "interface-essentials.scrbl" "scribblings" "drracket") "x_auto.scrbl")
+(reindent-and-save (collection-file-path "interface-essentials.scrbl" "scribblings" "drracket") "x_auto.scrbl")
 ;;note 1: blank lines/comments cause the skip-space position larger than paragraph end position
 
 ;;;usage instructions
@@ -188,18 +181,22 @@
   (send txt_7 insert "@(define (foo . a)\n(bar b))")
   (check-equal? (determine-spaces txt_7 19) #f)
   
-  #|@a{me}
-    @b[
-    @c{@d{e} f
-    g
-    h}
-  |#
   (define txt_8 (new racket:text%))
   (send txt_8 insert "@a{me}\n@b[\n@c{@d{e} f\ng\nh}\n")
   (check-equal? (count-parens txt_8 22) 2)
   (check-equal? (count-parens txt_8 14) 2)
   (check-equal? (determine-spaces txt_8 22) 2)
   (check-equal? (determine-spaces txt_8 12) 1) 
+  
+  (define txt_9 (new racket:text%))
+  (send txt_9 insert "@a[\n(b c)\n(d\n[(e) f]\n[g h])\n]\n")
+  (check-equal? (indent-racket-func txt_9 4) 1)
+  ;(check-equal? (indent-racket-func txt_9 10) 1)
+  (check-equal? (indent-racket-func txt_9 6) #f)
+  (check-equal? (determine-spaces txt_9 13) #f) 
+  (check-equal? (determine-spaces txt_9 4) 1)
+  ;;(check-equal? (send txt_9 backward-containing-sexp 13 0) 11) ;play
+  ;(check-equal? (send txt_9 backward-containing-sexp 9 0) 3) ;play
   ;(check-equal? (send txt_8 get-character 22) #\g)
   ;;first test: able to process string correctly
   ;(check-equal? (send txt_4 last-position) 57)

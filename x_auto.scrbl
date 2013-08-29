@@ -104,7 +104,7 @@ annotations:
   to every bound occurrence of the variable.
 
   @index['("Check syntax" "purple arrows")]{@index['("Check
-           syntax" "question-mark arrows")]{In}} addition to indicating
+        syntax" "question-mark arrows")]{In}} addition to indicating
   definite references with blue arrows, DrRacket also draws
   arrows to indicate potential references within macro
   definitions. Potential arrows are drawn in purple and annotated
@@ -209,7 +209,7 @@ on the languages that DrRacket supports.
 @section[#:tag "editor"]{Editing with Parentheses}
 
 @index['("flashing parenthesis matches")]{@index['("gray highlight
-  regions")]{In}} Racket mode, especially, DrRacket's editor provides
+ regions")]{In}} Racket mode, especially, DrRacket's editor provides
 special support for managing parentheses in a program. When the
 blinking caret is next to a parenthesis, DrRacket shades the region
 between the parenthesis and its matching parenthesis. This feature is
@@ -217,7 +217,7 @@ especially helpful when for balancing parentheses to complete an
 expression.
 
 @index['("formatting Racket code")]{@index['("indenting Racket
-  code")]{Although}} whitespace is not significant in Racket, DrRacket
+ code")]{Although}} whitespace is not significant in Racket, DrRacket
 encourages a particular format for Racket code. When you type Enter or
 Return, the editor inserts a new line and automatically indents it. To
 make DrRacket re-indent an existing line, move the blinking caret to
@@ -226,7 +226,7 @@ You can re-indent an entire region by selecting the region and typing
 Tab.
 
 @index['("changing a parenthesis as you type")]{@index['("automatic
-  parenthesis")]{DrRacket}} also rewrites parenthesis as you type them,
+ parenthesis")]{DrRacket}} also rewrites parenthesis as you type them,
 in order to make them match better. If you type a closing parenthesis
 @litchar{)}, a closing square bracket @litchar{]}, or a closing curly brace
 @litchar["}"], and if DrRacket can match it back to some earlier opening
@@ -266,8 +266,8 @@ parenthesis. For example, when typing
 @racketblock[
  (define (length l)
  (cond
- [(empty? l) 0]
- [else (+ 1 (length (rest l)))]))
+   [(empty? l) 0]
+   [else (+ 1 (length (rest l)))]))
  ]
 
 If you always type @litchar{[} and @litchar{]} where any of the square
