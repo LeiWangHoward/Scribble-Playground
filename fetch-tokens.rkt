@@ -115,7 +115,7 @@
       (send t insert (make-string amount #\ ) posi))) 
   #t);;delete and insert
 
-(reindent-and-save (collection-file-path "interface-essentials.scrbl" "scribblings" "drracket") "x_auto.scrbl")
+;(reindent-and-save (collection-file-path "interface-essentials.scrbl" "scribblings" "drracket") "x_auto.scrbl")
 ;;note 1: blank lines/comments cause the skip-space position larger than paragraph end position
 
 ;;;usage instructions
