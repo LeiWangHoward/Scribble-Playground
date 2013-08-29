@@ -32,14 +32,43 @@
               (equal? end (+ posi 1))))
        (equal? #\@ (send txt get-character posi))))
 
+;;count-parens: text position[natural](current paren position) ->  number of parens including current one
+(define (count-parens txt posi)
+  (define count 0)
+  (do ([p posi (send txt backward-containing-sexp p 0)])
+    ((not p) count)
+    (begin
+      (set! p (sub1 p))
+      ;(displayln (send txt get-character p))
+      ;(displayln p)
+      (when (or (equal? #\{ (send txt get-character p))
+                (equal? #\[ (send txt get-character p)))
+        (set! count (add1 count))))))
+#|(define p posi)
+  (define number 1)
+  (for/fold ([count 1])
+    ;[p (send txt backward-containing-sexp p 0)])
+    ([i (in-range (send txt last-position))])
+    #:break (not p)
+    (begin;let ([prev-posi (sub1 p)])
+      (set! p (sub1 (send txt backward-containing-sexp p 0)))
+      (displayln (send txt get-character p))
+      (displayln p)
+      (displayln count)
+      (when (or (equal? #\{ (send txt get-character p))
+                (equal? #\[ (send txt get-character p)))
+        (begin (add1 count)
+               (set! number count)))))
+  number)|#
+;;(let* ([p (send txt backward-containing-sexp p 0)]
+;;(displayln posi)))
 ;;determine-spaces : text position[natural] -> spaces in front of current paragraph
 (define (determine-spaces txt posi)
   (let* ([current-para (send txt position-paragraph posi)]
+         ;;[para-paren (count-parens txt posi)]
          [para-start (send txt paragraph-start-position current-para)]
          [para-start-skip-space (send txt skip-whitespace para-start 'forward #t)];skip comment also
          [para-check (send txt position-paragraph para-start-skip-space)])
-    ;[txt-length (send txt last-position)]
-    ;[para_end (send txt paragraph-end-position current_para)]
     (if (= para-check current-para);not an empty paragraph
         (let ([sexp-start-posi (send txt backward-containing-sexp para-start-skip-space 0)])
           (if sexp-start-posi
@@ -57,7 +86,7 @@
                       ((and (equal? #\( (send txt get-character prev-posi))
                             (equal? #\@ (send txt get-character (- prev-posi 1))))
                        #f);call corresponding function
-                      (else 1)))  
+                      (else (count-parens txt sexp-start-posi))))  
               sexp-start-posi))
         #f)))
 
@@ -86,10 +115,8 @@
       (send t insert (make-string amount #\ ) posi))) 
   #t);;delete and insert
 
-;(reindent-and-save (collection-file-path "interface-essentials.scrbl" "scribblings" "drracket") "x_auto.scrbl")
+(reindent-and-save (collection-file-path "interface-essentials.scrbl" "scribblings" "drracket") "x_auto.scrbl")
 ;;note 1: blank lines/comments cause the skip-space position larger than paragraph end position
-;;note 2: load file and save file
-;;note 3: counting parens
 
 ;;;usage instructions
 ;; position-line, given: a position start from 0, return line number it is at
@@ -111,6 +138,8 @@
 ;; paragraph-start-position (method of text%)  provided from racket/gui/base, racket/gui
 ;(send txt2 paragraph-start-position 0)
 
+;;[txt-length (send txt last-position)]
+;[para_end (send txt paragraph-end-position current_para)]
 (module+ test
   (require rackunit)
   (define txt_1 (new racket:text%))
@@ -123,9 +152,6 @@
                 #f)
   (check-equal? (is-at-sign? txt_1 20) #t)
   (check-equal? (is-at-sign? txt_1 22) #f)
-  ;test counting 0/1? conting starts from 0
-  (check-equal? (send txt_1 get-character 20) #\@)
-  (check-equal? (send txt_1 get-character 21) #\f)
   ;test determine-spaces
   (check-equal? (determine-spaces txt_1 15) #f)
   (check-equal? (determine-spaces txt_1 21) #f)
@@ -150,6 +176,7 @@
   (send txt_5 insert "#lang scribble/base\n@boldlist{@me{item1}\n@me{item2}\n}")
   (check-equal? (determine-spaces txt_5 31) #f)
   (check-equal? (determine-spaces txt_5 46) 1);;
+  ;(check-equal? (count-parens txt_5 46) 1);;play
   
   (define txt_6 (new racket:text%))
   (send txt_6 insert "@list{@me{item1}\n\n@me{item2}\n}")
@@ -160,6 +187,20 @@
   (define txt_7 (new racket:text%))
   (send txt_7 insert "@(define (foo . a)\n(bar b))")
   (check-equal? (determine-spaces txt_7 19) #f)
+  
+  #|@a{me}
+    @b[
+    @c{@d{e} f
+    g
+    h}
+  |#
+  (define txt_8 (new racket:text%))
+  (send txt_8 insert "@a{me}\n@b[\n@c{@d{e} f\ng\nh}\n")
+  (check-equal? (count-parens txt_8 22) 2)
+  (check-equal? (count-parens txt_8 14) 2)
+  (check-equal? (determine-spaces txt_8 22) 2)
+  (check-equal? (determine-spaces txt_8 12) 1) 
+  ;(check-equal? (send txt_8 get-character 22) #\g)
   ;;first test: able to process string correctly
   ;(check-equal? (send txt_4 last-position) 57)
   #|(check-equal? (txt-position-classify (txt-position-classify txt_2))  

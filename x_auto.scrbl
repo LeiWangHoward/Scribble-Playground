@@ -93,52 +93,52 @@ annotations:
 @itemize[
 
  @item{@bold{Syntactic Highlighting:} Imported variables and locally
- defined variables are highlighted with color
- changes. Documented identifiers are hyperlinked (via a
- right-click) to the documentation page.}
+  defined variables are highlighted with color
+  changes. Documented identifiers are hyperlinked (via a
+  right-click) to the documentation page.}
 
  @item{@bold{Lexical Structure:} The lexical structure is shown with
- arrows overlaid on the program text.  When the mouse cursor
- passes over a variable, DrRacket draws an arrow from the
- binding location to the variable, or from the binding location
- to every bound occurrence of the variable.
+  arrows overlaid on the program text.  When the mouse cursor
+  passes over a variable, DrRacket draws an arrow from the
+  binding location to the variable, or from the binding location
+  to every bound occurrence of the variable.
 
- @index['("Check syntax" "purple arrows")]{@index['("Check
-        syntax" "question-mark arrows")]{In}} addition to indicating
- definite references with blue arrows, DrRacket also draws
- arrows to indicate potential references within macro
- definitions. Potential arrows are drawn in purple and annotated
- with a question mark to indicate uncertainty, because DrRacket
- cannot predict how such identifiers will eventually be
- used. Their roles may depend on the arguments to the macro and
- the context the macro is used in.
+  @index['("Check syntax" "purple arrows")]{@index['("Check
+           syntax" "question-mark arrows")]{In}} addition to indicating
+  definite references with blue arrows, DrRacket also draws
+  arrows to indicate potential references within macro
+  definitions. Potential arrows are drawn in purple and annotated
+  with a question mark to indicate uncertainty, because DrRacket
+  cannot predict how such identifiers will eventually be
+  used. Their roles may depend on the arguments to the macro and
+  the context the macro is used in.
 
- @index['("alpha renaming")]{Additionally}, right-clicking (or
- Control-clicking on Mac OS X) on a variable activates a
- pop-up menu that lets you jump from binding location to bound
- location and vice versa, @as-index{@"\u03B1"-rename} the
- variable, or tack the arrows so they do not disappear.}
+  @index['("alpha renaming")]{Additionally}, right-clicking (or
+  Control-clicking on Mac OS X) on a variable activates a
+  pop-up menu that lets you jump from binding location to bound
+  location and vice versa, @as-index{@"\u03B1"-rename} the
+  variable, or tack the arrows so they do not disappear.}
 
  @item{@index['("tail calls")]{@bold{Tail Calls:}} Any
- sub-expression that is (syntactically) in tail-position with
- respect to its enclosing context is annotated by drawing a
- light purple arrow from the tail expression to its surrounding
- expression.}
+  sub-expression that is (syntactically) in tail-position with
+  respect to its enclosing context is annotated by drawing a
+  light purple arrow from the tail expression to its surrounding
+  expression.}
 
  @item{@bold{Require Annotations:} Right-clicking (or
- Control-clicking on Mac OS X) on the argument to
- @racket[require] activates a pop-up menu that lets you open the
- file that contains the @racket[require]d module.
+  Control-clicking on Mac OS X) on the argument to
+  @racket[require] activates a pop-up menu that lets you open the
+  file that contains the @racket[require]d module.
 
- Passing the mouse cursor over a @racket[require] expression
- inside a module shows all of the variables that are used from
- that @racket[require] expression. Additionally, if no
- variables are used from that require expression, it is colored
- like an unbound variable.
+  Passing the mouse cursor over a @racket[require] expression
+  inside a module shows all of the variables that are used from
+  that @racket[require] expression. Additionally, if no
+  variables are used from that require expression, it is colored
+  like an unbound variable.
 
- Finally, passing the mouse cursor over a variable that is
- imported from a module shows the module that it is imported
- from in a status line at the bottom of the frame.}
+  Finally, passing the mouse cursor over a variable that is
+  imported from a module shows the module that it is imported
+  from in a status line at the bottom of the frame.}
  
  ]
 
@@ -178,17 +178,17 @@ non-Racket languages. You specify a language in one of two ways:
 @itemize[
 
  @item{Select the @drlang{Use the language declared in the source}
- option (via the @menuitem["Language" "Choose Language..."] menu
- item), and then specify a specific language as part of the
- program usually by starting the definitions-window content with
- @hash-lang[].}
+  option (via the @menuitem["Language" "Choose Language..."] menu
+  item), and then specify a specific language as part of the
+  program usually by starting the definitions-window content with
+  @hash-lang[].}
 
  @item{Select the @menuitem["Language" "Choose Language..."] menu
- item, and choose a specific language. After changing the
- language, click @onscreen{Run} to reset the language in the
- interactions window. The bottom-left corner of DrRacket's main
- window also has a shortcut menu item for selecting previously
- selected languages.}
+  item, and choose a specific language. After changing the
+  language, click @onscreen{Run} to reset the language in the
+  interactions window. The bottom-left corner of DrRacket's main
+  window also has a shortcut menu item for selecting previously
+  selected languages.}
  
  ]
 
@@ -209,7 +209,7 @@ on the languages that DrRacket supports.
 @section[#:tag "editor"]{Editing with Parentheses}
 
 @index['("flashing parenthesis matches")]{@index['("gray highlight
- regions")]{In}} Racket mode, especially, DrRacket's editor provides
+  regions")]{In}} Racket mode, especially, DrRacket's editor provides
 special support for managing parentheses in a program. When the
 blinking caret is next to a parenthesis, DrRacket shades the region
 between the parenthesis and its matching parenthesis. This feature is
@@ -217,7 +217,7 @@ especially helpful when for balancing parentheses to complete an
 expression.
 
 @index['("formatting Racket code")]{@index['("indenting Racket
- code")]{Although}} whitespace is not significant in Racket, DrRacket
+  code")]{Although}} whitespace is not significant in Racket, DrRacket
 encourages a particular format for Racket code. When you type Enter or
 Return, the editor inserts a new line and automatically indents it. To
 make DrRacket re-indent an existing line, move the blinking caret to
@@ -226,7 +226,7 @@ You can re-indent an entire region by selecting the region and typing
 Tab.
 
 @index['("changing a parenthesis as you type")]{@index['("automatic
- parenthesis")]{DrRacket}} also rewrites parenthesis as you type them,
+  parenthesis")]{DrRacket}} also rewrites parenthesis as you type them,
 in order to make them match better. If you type a closing parenthesis
 @litchar{)}, a closing square bracket @litchar{]}, or a closing curly brace
 @litchar["}"], and if DrRacket can match it back to some earlier opening
@@ -238,25 +238,25 @@ brackets are not automatically changed to parentheses:
 @itemize[
 
  @item{If the square bracket is after @racket[cond]-like keyword,
- potentially skipping some of the sub-expressions in the
- @racket[cond]-like expression (for example, in a @racket[case]
- expression, the square brackets start in the second
- sub-expression).}
+  potentially skipping some of the sub-expressions in the
+  @racket[cond]-like expression (for example, in a @racket[case]
+  expression, the square brackets start in the second
+  sub-expression).}
 
  @item{If the square bracket begins a new expression immediately after
- a @racket[local]-like keyword. Note that the second expression
- after a @racket[local]-like keyword will automatically become
- an ordinary parenthesis.}
+  a @racket[local]-like keyword. Note that the second expression
+  after a @racket[local]-like keyword will automatically become
+  an ordinary parenthesis.}
 
  @item{If the square bracket is after a parenthesis that is after a
- @racket[letrec]-like keyword,}
+  @racket[letrec]-like keyword,}
 
  @item{If the square bracket is in a sequence and the s-expression
- before in the sequence is a compound expression, DrRacket uses
- the same kind parenthesis, brace, or bracket as before, or}
+  before in the sequence is a compound expression, DrRacket uses
+  the same kind parenthesis, brace, or bracket as before, or}
 
  @item{If the square bracket is in the middle of string,
- comment, character, or symbol.}
+  comment, character, or symbol.}
  ]
 
 The upshot of DrRacket's help is that you can always use the
@@ -453,7 +453,7 @@ window ultimately appears as follows:
 @racketblock[
  @#,ioinputfont{(1 2)}
  @#,iooutputfont{(1 2)}
- @#,racketresult[(1 2)]
+ @#,racketresult['(1 2)]
  @#,tt{>} @#,tt{_}
  ]
 
@@ -472,7 +472,7 @@ produces a different-looking result:
  @#,tt{>} (display v)
  @#,iooutputfont{(1 2)}
  @#,tt{>} v
- @#,racketresult[(1 2)]
+ @#,racketresult['(1 2)]
  @#,tt{>} @#,tt{_}
  ]
 
@@ -498,12 +498,27 @@ inserts a newline character into the input stream:
 @racketblock[
  @#,tt{>} (read)
  @#,ioinputfont{5}
-
  @#,racketresult[5]
  @#,tt{>} (read-char)
  @#,racketresult[#\newline]
  @#,tt{>} @#,tt{_}
  ]
+
+The @onscreen{eof} button that appears beside an input box inserts
+a single @racket[eof-object] into the input stream, but more IO may
+follow in a later sequence. For example, in the following interaction,
+the user typed @litchar{1} and then clicked the @onscreen{eof} button:
+
+@racketblock[
+ @#,tt{>} (read-char)
+ @#,ioinputfont{1}@#,racketresult[#\1]
+ @#,tt{>} (read-char)
+ @#,racketresultfont{#<eof>}
+ ]
+
+At this point, however, future interactions can still take place:
+new calls to input functions with open a new input box and new
+characters will come from the same port.
 
 Within a @racket[@#,hash-lang[] @#,racketmodname[racket]] module,
 the results of top-level expression print the same as the results of
@@ -594,26 +609,26 @@ While execution is paused, several buttons are available:
 @itemize[
 
  @item{The @as-index{@onscreen{Go} button} is enabled
- whenever the program is paused.  It causes the program to resume
- until it either completes, reaches a breakpoint, or raises an
- unhandled exception.}
+  whenever the program is paused.  It causes the program to resume
+  until it either completes, reaches a breakpoint, or raises an
+  unhandled exception.}
 
  @item{The @as-index{@onscreen{Step} button} is enabled whenever
- the program is paused.  It causes the program to make a single step
- and then pause again.}
+  the program is paused.  It causes the program to make a single step
+  and then pause again.}
 
  @item{The @as-index{@onscreen{Over} button} is only enabled when
- execution is paused at the start of an expression that is not in tail
- position.  It sets a one-time breakpoint at the end of the
- expression (represented by a yellow circle) and causes the program to
- proceed.  When execution reaches the one-time breakpoint, it pauses
- and removes that breakpoint.}
+  execution is paused at the start of an expression that is not in tail
+  position.  It sets a one-time breakpoint at the end of the
+  expression (represented by a yellow circle) and causes the program to
+  proceed.  When execution reaches the one-time breakpoint, it pauses
+  and removes that breakpoint.}
 
  @item{The @as-index{@onscreen{Out} button} is only enabled when
- execution is paused within the context of another expression.  Like
- the @onscreen{Over} button, it sets a one-time breakpoint and
- continues execution.  In this case, the program stops upon returning
- to the context or raising an unhandled exception.}
+  execution is paused within the context of another expression.  Like
+  the @onscreen{Over} button, it sets a one-time breakpoint and
+  continues execution.  In this case, the program stops upon returning
+  to the context or raising an unhandled exception.}
  
  ]
 
@@ -635,47 +650,47 @@ additional actions:
 @itemize[
 
  @item{Hovering the mouse cursor over a parenthesis may reveal a
- pink circle.  If so, right-clicking or control-clicking (Mac OS X)
- will open a menu with options to @onscreen{Pause at this point} or
- @onscreen{Continue to this point}.  The former sets an ordinary
- breakpoint at that location; the latter sets a one-time breakpoint and
- resumes execution.  An ordinary breakpoint appears as a red circle,
- and a one-time breakpoint appears as a yellow circle.
+  pink circle.  If so, right-clicking or control-clicking (Mac OS X)
+  will open a menu with options to @onscreen{Pause at this point} or
+  @onscreen{Continue to this point}.  The former sets an ordinary
+  breakpoint at that location; the latter sets a one-time breakpoint and
+  resumes execution.  An ordinary breakpoint appears as a red circle,
+  and a one-time breakpoint appears as a yellow circle.
 
- @bold{Tip:} If the debugged program is not a module, then the
- @italic{first time} it is debugged, breakpoints will only become
- available in expressions as they are evaluated.  However, the next
- time the program is debugged, the debugger will remember the set of
- breakable locations from the previous session.
+  @bold{Tip:} If the debugged program is not a module, then the
+  @italic{first time} it is debugged, breakpoints will only become
+  available in expressions as they are evaluated.  However, the next
+  time the program is debugged, the debugger will remember the set of
+  breakable locations from the previous session.
 
- @bold{Tip:} Clicking the @onscreen{Run} button after a debugging
- session will cause all breakpoints to disappear from the definitions
- window.  These breakpoints are not forgotten, and clicking
- @onscreen{Debug} again will restore them.  However, breakpoints do
- @italic{not} persist across restarts of DrRacket.}
+  @bold{Tip:} Clicking the @onscreen{Run} button after a debugging
+  session will cause all breakpoints to disappear from the definitions
+  window.  These breakpoints are not forgotten, and clicking
+  @onscreen{Debug} again will restore them.  However, breakpoints do
+  @italic{not} persist across restarts of DrRacket.}
 
  @item{If execution is paused at the start of an expression, then
- right-clicking or control-clicking (Mac OS X) on the green triangle
- opens a menu with the option to @onscreen{Skip expression...}.
- Selecting this opens a text box in which to enter a value for the
- expression.  The expression is skipped, with the entered value
- substituted for it.}
+  right-clicking or control-clicking (Mac OS X) on the green triangle
+  opens a menu with the option to @onscreen{Skip expression...}.
+  Selecting this opens a text box in which to enter a value for the
+  expression.  The expression is skipped, with the entered value
+  substituted for it.}
 
  @item{If execution is paused at the end of an expression, then the
- expression and its value are displayed to the left of the button bar.
- Right-clicking or control-clicking (Mac OS X) on the green triangle
- opens a menu with options to @onscreen{Print return value to console}
- and @onscreen{Change return value...}.  The former displays the return
- value in the interactions window; the latter opens a text box in which
- to enter a substitute value.}
+  expression and its value are displayed to the left of the button bar.
+  Right-clicking or control-clicking (Mac OS X) on the green triangle
+  opens a menu with options to @onscreen{Print return value to console}
+  and @onscreen{Change return value...}.  The former displays the return
+  value in the interactions window; the latter opens a text box in which
+  to enter a substitute value.}
 
  @item{Hovering the mouse cursor over a bound variable displays the
- variable's name and value to the right of the button bar.
- Right-clicking or control-clicking (Mac OS X) opens a menu with
- options to @onscreen{Print value of <var> to console} or
- @onscreen{(set! <var> ...)}.  The former displays the variable's value
- in the interactions window; the latter opens a text box in which to
- enter a new value for the variable.}
+  variable's name and value to the right of the button bar.
+  Right-clicking or control-clicking (Mac OS X) opens a menu with
+  options to @onscreen{Print value of <var> to console} or
+  @onscreen{(set! <var> ...)}.  The former displays the variable's value
+  in the interactions window; the latter opens a text box in which to
+  enter a new value for the variable.}
  
  ]
 
@@ -782,24 +797,24 @@ Each type has advantages and disadvantages:
 @itemize[
 
  @item{A @deftech{launcher executable} uses the latest version of
- your program source file when it starts. It also accesses library
- files from your DrRacket installation when it runs. Since a launcher
- executable contains specific paths to access those files, launchers
- usually cannot be moved from one machine to another.}
+  your program source file when it starts. It also accesses library
+  files from your DrRacket installation when it runs. Since a launcher
+  executable contains specific paths to access those files, launchers
+  usually cannot be moved from one machine to another.}
 
  @item{A @deftech{stand-alone executable} embeds a compiled copy of
- your program and any Racket libraries that your program uses. When
- the executable is started, it uses the embedded copies and does not
- need your original source file. It may, however, access your DrRacket
- installation for DLLs, frameworks, shared libraries, or helper
- executables. Consequently, a stand-alone executable usually cannot be
- moved from one machine to another.}
+  your program and any Racket libraries that your program uses. When
+  the executable is started, it uses the embedded copies and does not
+  need your original source file. It may, however, access your DrRacket
+  installation for DLLs, frameworks, shared libraries, or helper
+  executables. Consequently, a stand-alone executable usually cannot be
+  moved from one machine to another.}
 
  @item{A @deftech{distribution archive} packages a stand-alone
- executable together with any needed DLLs, frameworks, shared
- libraries, and helper executables. A distribution archive can be
- unpacked and run on any machine with the same operating system as
- yours.}
+  executable together with any needed DLLs, frameworks, shared
+  libraries, and helper executables. A distribution archive can be
+  unpacked and run on any machine with the same operating system as
+  yours.}
  
  ]
 
