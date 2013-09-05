@@ -117,8 +117,8 @@ more than 65 char will be passed to next line
     ;;for line break
     (define para-end (send t paragraph-end-position i))
     (define para-length (add1 (- para-end posi)))
-    (when (> para-length 70)
-      (adjust-para t i para-end posi)
+    (when (> para-length 60)
+      #t;(adjust-para t i para-end posi)
       (set! posi (send t paragraph-start-position i)))
     (define amount (determine-spaces t posi))
     (adjust-spaces t i amount posi)))
@@ -135,11 +135,15 @@ more than 65 char will be passed to next line
 (define (adjust-para t para para-end posi); posi is paragraph start
   (define posi-skip-space (send t skip-whitespace posi 'forward #f));not skip comments
   (define new-length (add1 (- para-end posi-skip-space)))
-  (when (> 70 new-length)
-    (define new-start (- para-end 70))
+  (when (> 60 new-length)
+    (define new-start (- para-end 60))
+    (for ([i (in-range 5)])
+      (let ([new-break (- new-start i)])
+       (when (equal? #\ (send t get-character new-break))
+           (set! new-start new-break))))
     (send t delete (sub1 posi) posi-skip-space);clear out all white space, and previous line breaker
-    (send t insert #\ new-start)
-    (send t insert #\newline (add1 new-start)))
+    (send t insert #\ (sub1 posi))
+    (send t insert #\newline new-start))
   #t)
 (reindent-and-save (collection-file-path "interface-essentials.scrbl" "scribblings" "drracket") "x_auto.scrbl")
 ;;note 1: blank lines/comments cause the skip-space position larger than paragraph end position
