@@ -1,6 +1,6 @@
 #lang scribble/doc
 @(require "common.rkt"
-          scribble/decode scribble/eval scribble/struct scribble/racket
+ scribble/decode scribble/eval scribble/struct scribble/racket
           (for-label racket/gui/base))
 
 @(define (ioinputfont . s)
@@ -106,8 +106,8 @@ annotations:
   @index['("Check syntax" "purple arrows")]{@index['("Check
         syntax" "question-mark arrows")]{In}} addition to indicating
   definite references with blue arrows, DrRacket also draws
-  arrows to indicate potential references within macro
-  definitions. Potential arrows are drawn in purple and annotated
+  arrows to indicate potential references
+  within macro definitions. Potential arrows are drawn in purple and annotated
   with a question mark to indicate uncertainty, because DrRacket
   cannot predict how such identifiers will eventually be
   used. Their roles may depend on the arguments to the macro and
@@ -126,14 +126,14 @@ annotations:
   expression.}
 
  @item{@bold{Require Annotations:} Right-clicking (or
-  Control-clicking on Mac OS X) on the argument to
-  @racket[require] activates a pop-up menu that lets you open the
+  Control-clicking on Mac OS X) on the
+  argument to @racket[require] activates a pop-up menu that lets you open the
   file that contains the @racket[require]d module.
 
   Passing the mouse cursor over a @racket[require] expression
   inside a module shows all of the variables that are used from
-  that @racket[require] expression. Additionally, if no
-  variables are used from that require expression, it is colored
+  that @racket[require] expression. Additionally, if
+  no variables are used from that require expression, it is colored
   like an unbound variable.
 
   Finally, passing the mouse cursor over a variable that is
@@ -177,10 +177,10 @@ non-Racket languages. You specify a language in one of two ways:
 
 @itemize[
 
- @item{Select the @drlang{Use the language declared in the source}
-  option (via the @menuitem["Language" "Choose Language..."] menu
-  item), and then specify a specific language as part of the
-  program usually by starting the definitions-window content with
+ @item{Select the @drlang{Use the language declared in the
+   source} option (via the @menuitem["Language" "Choose Language..."] menu
+  item), and then specify a specific language as
+  part of the program usually by starting the definitions-window content with
   @hash-lang[].}
 
  @item{Select the @menuitem["Language" "Choose Language..."] menu
@@ -674,16 +674,16 @@ additional actions:
   opens a menu with the option to @onscreen{Skip expression...}.
   Selecting this opens a text box in which to enter a value for the
   expression.  The expression is skipped, with the entered value
-  substituted for it.}
-
+  substituted for
+  it.}
  @item{If execution is paused at the end of an expression, then the
   expression and its value are displayed to the left of the button bar.
   Right-clicking or control-clicking (Mac OS X) on the green triangle
   opens a menu with options to @onscreen{Print return value to console}
   and @onscreen{Change return value...}.  The former displays the return
   value in the interactions window; the latter opens a text box in which
-  to enter a substitute value.}
-
+  to enter a substitute
+  value.}
  @item{Hovering the mouse cursor over a bound variable displays the
   variable's name and value to the right of the button bar.
   Right-clicking or control-clicking (Mac OS X) opens a menu with
@@ -797,8 +797,8 @@ Each type has advantages and disadvantages:
 @itemize[
 
  @item{A @deftech{launcher executable} uses the latest version of
-  your program source file when it starts. It also accesses library
-  files from your DrRacket installation when it runs. Since a launcher
+  your program source file when it starts. It also
+  accesses library files from your DrRacket installation when it runs. Since a launcher
   executable contains specific paths to access those files, launchers
   usually cannot be moved from one machine to another.}
 
