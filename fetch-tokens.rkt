@@ -1,18 +1,35 @@
 #lang racket
-#|simple result
-1)function "tab adjusted"
+#|simple rules:
+
+1)tab adjusted
 
 @itemlist[@item{item1}
           @item{item2}]
 
-2)String "one-space adjusted"
+2)one-space adjusted
 
 @centered{
  @bold{Cookies Wanted}
  @italic{Chocolate chip preferred!}
 }
 
-3) Tips:
+@a[ 
+ test
+ @b{c}
+ @d{e}
+]
+
+3)line break rules:
+
+starting with non white space:
+
+Each paragraph shall not have more than 70 characters. The last "word"
+will be passed to the next line
+
+starting with several white space:
+
+more than 65 char will be passed to next line
+4) Tips:
  whenever there is a "\n", this line has a white-space
  (send a-text set-line-spacing space) → void?
  space : (and/c real? (not/c negative?))
@@ -95,7 +112,14 @@
 
 (define (indent-all t)
   (for ([i (in-range (send t last-paragraph) -1 -1)]);counting down from the last paragraph
+         ;(in-range (send t last-paragraph) 1)])
     (define posi (send t paragraph-start-position i))
+    ;;for line break
+    (define para-end (send t paragraph-end-position i))
+    (define para-length (add1 (- para-end posi)))
+    (when (> para-length 70)
+      (adjust-para t i para-end posi)
+      (set! posi (send t paragraph-start-position i)))
     (define amount (determine-spaces t posi))
     (adjust-spaces t i amount posi)))
 
@@ -108,6 +132,15 @@
       (send t insert (make-string amount #\ ) posi))) 
   #t);;delete and insert
 
+(define (adjust-para t para para-end posi); posi is paragraph start
+  (define posi-skip-space (send t skip-whitespace posi 'forward #f));not skip comments
+  (define new-length (add1 (- para-end posi-skip-space)))
+  (when (> 70 new-length)
+    (define new-start (- para-end 70))
+    (send t delete (sub1 posi) posi-skip-space);clear out all white space, and previous line breaker
+    (send t insert #\ new-start)
+    (send t insert #\newline (add1 new-start)))
+  #t)
 (reindent-and-save (collection-file-path "interface-essentials.scrbl" "scribblings" "drracket") "x_auto.scrbl")
 ;;note 1: blank lines/comments cause the skip-space position larger than paragraph end position
 
