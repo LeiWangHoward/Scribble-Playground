@@ -1,45 +1,49 @@
-#lang scribble/doc
-@(require "common.rkt"
- scribble/decode scribble/eval scribble/struct scribble/racket
-          (for-label racket/gui/base))
+#lang scribble/doc @(require "common.rkt"
+       
+   scribble/decode scribble/eval scribble/struc 
+scribble/racket           (for-label racket/gui/base))
 
 @(define (ioinputfont . s)
    (apply tt s))
 @(define (iooutputfont . s)
    (make-element output-color (decode-content s)))
 
-@title[#:tag "interface-essentials" #:style 'toc]{Interface Essentials}
+@title[#:tag "interface-essentials" #:style 'toc]{Interfac 
+ Essentials}
 
-The DrRacket window has three parts: a row of buttons at the top, two
-editing panels in the middle, and a status line at the bottom.
+The DrRacket window has three parts: a row of button 
+at the top, twoe diting panels in the middle, an 
+a status line at the bottom.
 
 @centerline{@image[#:scale 0.7 "example.png"]}
 
-The top editing panel, called the @deftech{definitions window}, is for
-defining programs. The above figure shows a program that defines the
+The top editing panel, called the @deftech{definition 
+ window}, is ford efining programs. The above figure shows a program that defines the
 function @racket[square].
 
-The bottom panel, called the @deftech{interactions window}, is for
-evaluating Racket expressions interactively. The @onscreen{Language} line
-in the interactions window indicates which primitives are available in
-the definitions and interactions windows.  In the above figure, the
-language is determined from the program source's @hash-lang[] line.
+The bottom panel, called the @deftech{interaction 
+ window}, is fore valuating Racket expressions interactively. The @onscreen{Language} line
+in the interactions window indicates which primitive 
+are available int he definitions and interaction 
+windows.  In the above figure, thel anguage is determine 
+from the program source's @hash-lang[] line.
 
 @margin-note{The interactions window is described further in
  @secref["interactions-window"], later in this manual.}
 
-Clicking the @onscreen{Run} button evaluates the program in the
-definitions window, making the program's definitions available in the
-interactions window. Given the definition of @racket[square] as in the
-figure above, typing @racket[(square 2)] in the interactions window
-produces the result @racket[4].
+Clicking the @onscreen{Run} button evaluates th 
+program in thed efinitions window, making the program' 
+definitions available in thei nteractions window 
+Given the definition of @racket[square] as in the 
+igure above, typing @racket[(square 2)] in the interaction 
+windowp roduces the result @racket[4].
 
-The @deftech{status line} at the bottom of DrRacket's window provides
-information about the current line and position of the editing caret,
-whether the current file can be modified, and whether DrRacket is
-currently evaluating any expression. The @as-index{recycling icon}
-flashes while DrRacket is ``recycling'' internal resources, such as
-memory.
+The @deftech{status line} at the bottom of DrRacket' 
+window providesi nformation about the current lin 
+and position of the editing caret,w hether the curren 
+file can be modified, and whether DrRacket isc urrentl 
+evaluating any expression. The @as-index{recyclin 
+ icon}f lashes while DrRacket is ``recycling'' internal resources, such asm emory.
 
 @local-table-of-contents[]
 
@@ -47,100 +51,803 @@ memory.
 
 @section[#:tag "buttons"]{Buttons}
 
-The left end of the row of buttons in DrRacket contains a miniature
-button with the @index['("filename button")]{current file's
+The left end of the row of buttons in DrRacket contain 
+a miniatureb utton with the @index['("filename button")]{current file's
  name}. Clicking the button opens a menu that shows the file's full
-pathname. Selecting one of the menu entries produces an open-file
-dialog starting in the corresponding directory.
+pathname. Selecting one of the menu entries produce 
+an open-filed ialog starting in the correspondin 
+directory.
 
 Below the filename button is a @as-index{@onscreen{(define ...)}
  button} for a pop-up menu of names that are defined in the definitions
-window. Selecting an item from the menu moves the blinking caret to
-the corresponding definition.
+window. Selecting an item from the menu moves th 
+blinking caret tot he corresponding definition.
 
-The @as-index{@onscreen{Save} button} appears whenever the definitions
-window is modified. Clicking the button saves the contents of the
-definitions window to a file. The current name of the file appears to
-the left of the @onscreen{Save} button, but a file-selection dialog
-appears if the file has never been saved before.
+The @as-index{@onscreen{Save} button} appears wheneve 
+the definitionsw indow is modified. Clicking th 
+button saves the contents of thed efinitions windo 
+to a file. The current name of the file appears to 
+he left of the @onscreen{Save} button, but a file-selectio 
+dialoga ppears if the file has never been saved before.
 
-The @as-index{@onscreen{Step} button}---which appears only for the
-@|HtDP| teaching languages @drlang{Beginning Student} through
-@drlang{Intermediate Student with Lambda}---starts the
-@as-index{Stepper}, which shows the evaluation of a program as a
-series of small steps. Each evaluation step replaces an expression in
-the program with an equivalent one using the evaluation rules of
-DrRacket. For example, a step might replace @racket[(+ 1 2)] with
-@racket[3]. These are the same rules used by DrRacket to evaluate a
-program.  Clicking @onscreen{Step} opens a new window that contains
-the program from the definitions window, plus several new buttons:
-these buttons allow navigation of the evaluation as a series of steps.
+The @as-index{@onscreen{Step} button}---which appear 
+only for the@ |HtDP| teaching languages @drlang{Beginnin 
+ Student} through@ drlang{Intermediate Student with Lambda}---starts the
+@as-index{Stepper}, which shows the evaluation o 
+a program as as eries of small steps. Each evaluatio 
+step replaces an expression int he program with a 
+equivalent one using the evaluation rules ofD rRacket 
+For example, a step might replace @racket[(+ 1 2) 
+                                          with@ racket[3] 
+                                          These ar 
+                                          the sam 
+                                          rules use 
+                                          by DrRacke 
+                                          to evaluat 
+                                          ap rogram 
+                                          Clickin 
+                                          @onscreen{Step 
+  opens a new window that containst he program fro 
+  the definitions window, plus several new buttons: 
+  hese buttons allow navigation of the evaluatio 
+  as a series of steps.
 
-@margin-note{The debugging interface is described further in
- @secref["debugger"], later in this manual.}
+  @margin-note{The debugging interface is described further in
+   @secref["debugger"], later in this manual.}
 
-The @as-index{@onscreen{Debug} button}---which does @emph{not} appear
-for the @|HtDP| teaching languages---starts a more conventional
-stepping @as-index{debugger}.  It runs the program in the definitions
-window like the @onscreen{Run} button, but also opens a debugging
-panel with several other buttons that provide control over the
-program's execution.
+  The @as-index{@onscreen{Debug} button}---whic 
+  does @emph{not} appearf or the @|HtDP| teachin 
+  languages---starts a more conventionals teppin 
+  @as-index{debugger}.  It runs the program in th 
+  definitionsw indow like the @onscreen{Run} button 
+  but also opens a debuggingp anel with several othe 
+  buttons that provide control over thep rogram' 
+  execution.
 
-Clicking the @as-index{@onscreen{Check Syntax} button} annotates the
-program text in the definitions window.  It add the following
-annotations:
+  Clicking the @as-index{@onscreen{Check Syntax 
+    button} annotates thep rogram text in the definitions window.  It add the following
+   annotations:
 
-@itemize[
+   @itemize[
 
- @item{@bold{Syntactic Highlighting:} Imported variables and locally
-  defined variables are highlighted with color
-  changes. Documented identifiers are hyperlinked (via a
-  right-click) to the documentation page.}
+    @item{@bold{Syntactic Highlighting:} Imported variables and locally
+     defined variables are highlighted with color         changes. Documented identifiers are hyperlinked (via a
+     right-click) to the documentation page.}
 
- @item{@bold{Lexical Structure:} The lexical structure is shown with
-  arrows overlaid on the program text.  When the mouse cursor
-  passes over a variable, DrRacket draws an arrow from the
-  binding location to the variable, or from the binding location
-  to every bound occurrence of the variable.
+    @item{@bold{Lexical Structure:} The lexical structure is shown with
+     arrows overlaid on the program text.  When th 
+     mouse cursor        passes over a variable 
+     DrRacket draws an arrow from the        bindin 
+     location to the variable, or from the bindin 
+     location        to every bound occurrence o 
+     the variable.
 
-  @index['("Check syntax" "purple arrows")]{@index['("Check
+     @index['("Check syntax" "purple arrows")]{@index['("Check
         syntax" "question-mark arrows")]{In}} addition to indicating
-  definite references with blue arrows, DrRacket also draws
-  arrows to indicate potential references
-  within macro definitions. Potential arrows are drawn in purple and annotated
-  with a question mark to indicate uncertainty, because DrRacket
-  cannot predict how such identifiers will eventually be
-  used. Their roles may depend on the arguments to the macro and
-  the context the macro is used in.
+     definite references with blue arrows, DrRacke 
+     also draws        arrows to indicate potentia 
+     references within macro        definitions 
+     Potential arrows are drawn in purple and annotate 
+     with a question mark to indicate uncertainty 
+     because DrRacket        cannot predict how suc 
+     identifiers will eventually be        used 
+     Their roles may depend on the arguments to th 
+     macro and        the context the macro is use 
+     in.
 
-  @index['("alpha renaming")]{Additionally}, right-clicking (or
-  Control-clicking on Mac OS X) on a variable activates a
-  pop-up menu that lets you jump from binding location to bound
-  location and vice versa, @as-index{@"\u03B1"-rename} the
-  variable, or tack the arrows so they do not disappear.}
+     @index['("alpha renaming")]{Additionally}, right-clickin 
+     (or        Control-clicking on Mac OS X) o 
+     a variable activates a        pop-up menu tha 
+     lets you jump from binding location to boun 
+     location and vice versa, @as-index{@"\u03B1"-rename} the        variable, or tack the arrows so they do not disappear.}
 
- @item{@index['("tail calls")]{@bold{Tail Calls:}} Any
-  sub-expression that is (syntactically) in tail-position with
-  respect to its enclosing context is annotated by drawing a
-  light purple arrow from the tail expression to its surrounding
-  expression.}
+    @item{@index['("tail calls")]{@bold{Tail Calls:}} Any
+     sub-expression that is (syntactically) in tail-positio 
+     with        respect to its enclosing contex 
+     is annotated by drawing a        light purpl 
+     arrow from the tail expression to its surrounding        expression.}
 
- @item{@bold{Require Annotations:} Right-clicking (or
-  Control-clicking on Mac OS X) on the
-  argument to @racket[require] activates a pop-up menu that lets you open the
-  file that contains the @racket[require]d module.
+    @item{@bold{Require Annotations:} Right-clicking (or
+     Control-clicking on Mac OS X) on the argumen 
+     to         @racket[require] activates a pop-u 
+     menu that lets you open the         file tha 
+     contains the @racket[require]d module.
 
-  Passing the mouse cursor over a @racket[require] expression
-  inside a module shows all of the variables that are used from
-  that @racket[require] expression. Additionally, if
-  no variables are used from that require expression, it is colored
-  like an unbound variable.
+     Passing the mouse cursor over a @racket[require 
+                                             expressio 
+                                             insid 
+                                             a modul 
+                                             show 
+                                             al 
+                                             of th 
+                                             variable 
+                                             tha 
+                                             ar 
+                                             use 
+                                             fro 
+                                             tha 
+                                             @racket[require 
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+    expression. Additionally, if no         variables are used from that require expression, it is colored         like an unbound variable.
 
-  Finally, passing the mouse cursor over a variable that is
-  imported from a module shows the module that it is imported
-  from in a status line at the bottom of the frame.}
- 
- ]
+         Finally, passing the mouse cursor over a variable that is
+         imported from a module shows the module that it is imported
+         from in a status line at the bottom of the frame.}
+
+]
 
 Check Syntax also runs automatically as you edit your program,
 and the bottom, rightmost corner of the DrRacket window
@@ -177,20 +884,20 @@ non-Racket languages. You specify a language in one of two ways:
 
 @itemize[
 
- @item{Select the @drlang{Use the language declared in the
-   source} option (via the @menuitem["Language" "Choose Language..."] menu
-  item), and then specify a specific language as
-  part of the program usually by starting the definitions-window content with
-  @hash-lang[].}
+ @item{Select the @drlang{Use the language declared in the source}
+       option (via the @menuitem["Language" "Choose Language..."] menu
+       item), and then specify a specific language as part of the
+       program usually by starting the definitions-window content with
+       @hash-lang[].}
 
- @item{Select the @menuitem["Language" "Choose Language..."] menu
-  item, and choose a specific language. After changing the
-  language, click @onscreen{Run} to reset the language in the
-  interactions window. The bottom-left corner of DrRacket's main
-  window also has a shortcut menu item for selecting previously
-  selected languages.}
- 
- ]
+  @item{Select the @menuitem["Language" "Choose Language..."] menu
+       item, and choose a specific language. After changing the
+       language, click @onscreen{Run} to reset the language in the
+       interactions window. The bottom-left corner of DrRacket's main
+       window also has a shortcut menu item for selecting previously
+       selected languages.}
+
+]
 
 Using a language declared in a program's source is the recommend mode,
 and it is described further in @secref["module"].
@@ -209,7 +916,7 @@ on the languages that DrRacket supports.
 @section[#:tag "editor"]{Editing with Parentheses}
 
 @index['("flashing parenthesis matches")]{@index['("gray highlight
- regions")]{In}} Racket mode, especially, DrRacket's editor provides
+regions")]{In}} Racket mode, especially, DrRacket's editor provides
 special support for managing parentheses in a program. When the
 blinking caret is next to a parenthesis, DrRacket shades the region
 between the parenthesis and its matching parenthesis. This feature is
@@ -217,7 +924,7 @@ especially helpful when for balancing parentheses to complete an
 expression.
 
 @index['("formatting Racket code")]{@index['("indenting Racket
- code")]{Although}} whitespace is not significant in Racket, DrRacket
+code")]{Although}} whitespace is not significant in Racket, DrRacket
 encourages a particular format for Racket code. When you type Enter or
 Return, the editor inserts a new line and automatically indents it. To
 make DrRacket re-indent an existing line, move the blinking caret to
@@ -226,7 +933,7 @@ You can re-indent an entire region by selecting the region and typing
 Tab.
 
 @index['("changing a parenthesis as you type")]{@index['("automatic
- parenthesis")]{DrRacket}} also rewrites parenthesis as you type them,
+parenthesis")]{DrRacket}} also rewrites parenthesis as you type them,
 in order to make them match better. If you type a closing parenthesis
 @litchar{)}, a closing square bracket @litchar{]}, or a closing curly brace
 @litchar["}"], and if DrRacket can match it back to some earlier opening
@@ -238,37 +945,37 @@ brackets are not automatically changed to parentheses:
 @itemize[
 
  @item{If the square bracket is after @racket[cond]-like keyword,
-  potentially skipping some of the sub-expressions in the
-  @racket[cond]-like expression (for example, in a @racket[case]
-  expression, the square brackets start in the second
-  sub-expression).}
+       potentially skipping some of the sub-expressions in the
+       @racket[cond]-like expression (for example, in a @racket[case]
+       expression, the square brackets start in the second
+       sub-expression).}
 
  @item{If the square bracket begins a new expression immediately after
-  a @racket[local]-like keyword. Note that the second expression
-  after a @racket[local]-like keyword will automatically become
-  an ordinary parenthesis.}
+       a @racket[local]-like keyword. Note that the second expression
+       after a @racket[local]-like keyword will automatically become
+       an ordinary parenthesis.}
 
  @item{If the square bracket is after a parenthesis that is after a
-  @racket[letrec]-like keyword,}
+       @racket[letrec]-like keyword,}
 
  @item{If the square bracket is in a sequence and the s-expression
-  before in the sequence is a compound expression, DrRacket uses
-  the same kind parenthesis, brace, or bracket as before, or}
+      before in the sequence is a compound expression, DrRacket uses
+      the same kind parenthesis, brace, or bracket as before, or}
 
  @item{If the square bracket is in the middle of string,
-  comment, character, or symbol.}
- ]
+       comment, character, or symbol.}
+]
 
 The upshot of DrRacket's help is that you can always use the
 (presumably unshifted) square brackets on your keyboard to type
 parenthesis. For example, when typing
 
 @racketblock[
- (define (length l)
- (cond
+(define (length l)
+  (cond
    [(empty? l) 0]
    [else (+ 1 (length (rest l)))]))
- ]
+]
 
 If you always type @litchar{[} and @litchar{]} where any of the square
 brackets or parentheses appear, DrRacket will change the square
@@ -327,7 +1034,7 @@ show a new file. Each tab has its own interactions window.
 
 In the @onscreen{General} pane of the
 the preferences window, a checkbox labeled @onscreen{Open files in
- separate tabs} causes DrRacket to open files in new tabs in the
+separate tabs} causes DrRacket to open files in new tabs in the
 frontmost window, rather than opening a new window for the file.
 
 The key bindings Control-Pageup and Control-Pagedown move between
@@ -399,7 +1106,7 @@ from the next deeper one in the stack.
 
 Many Racket programs avoid explicit input and output operations,
 obtaining input via direct function calls in the @tech{interactions
- window}, and producing output by returning values. Other Racket
+window}, and producing output by returning values. Other Racket
 programs explicitly print output for the user during evaluation using
 @as-index{@racket[write]} or @as-index{@racket[display]}, or
 explicitly request input from the user using @as-index{@racket[read]}
@@ -410,8 +1117,8 @@ but within special boxes that separate explicit I/O from normal
 expressions and results. For example, evaluating
 
 @racketblock[
- @#,tt{>} (read)
- ]
+@#,tt{>} (read)
+]
 
 in the interactions window produces a special box for entering input:
 
@@ -425,11 +1132,11 @@ shows a new prompt, it hides the interaction box. Thus, if you type
 as follows:
 
 @racketblock[
- @#,tt{>} (read)
- @#,ioinputfont{5}
- @#,racketresult[5]
- @#,tt{>} @#,tt{_}
- ]
+@#,tt{>} (read)
+@#,ioinputfont{5}
+@#,racketresult[5]
+@#,tt{>} @#,tt{_}
+]
 
 In this case, the first @ioinputfont{5} is the input, and the second
 @racketresult[5] is the result of the @racket[(read)] expression. The
@@ -441,21 +1148,21 @@ Output goes into the @tech{interactions window} directly. If you run
 the program
 
 @racketmod[
- racket
- (define v (read))
- (display v) (newline)
- v
- ]
+racket
+(define v (read))
+(display v) (newline)
+v
+]
 
 and provide the input S-expression @racket[(1 2)], the interactions
 window ultimately appears as follows:
 
 @racketblock[
- @#,ioinputfont{(1 2)}
- @#,iooutputfont{(1 2)}
- @#,racketresult['(1 2)]
- @#,tt{>} @#,tt{_}
- ]
+@#,ioinputfont{(1 2)}
+@#,iooutputfont{(1 2)}
+@#,racketresult['(1 2)]
+@#,tt{>} @#,tt{_}
+]
 
 In this example, @racket[display] produces output immediately beneath
 the input you typed, and the final result is printed last. The
@@ -467,14 +1174,14 @@ Entering the same program line-by-line in the interactions window
 produces a different-looking result:
 
 @racketblock[
- @#,tt{>} (define v (read))
- @#,ioinputfont{(1 2)}
- @#,tt{>} (display v)
- @#,iooutputfont{(1 2)}
- @#,tt{>} v
- @#,racketresult['(1 2)]
- @#,tt{>} @#,tt{_}
- ]
+@#,tt{>} (define v (read))
+@#,ioinputfont{(1 2)}
+@#,tt{>} (display v)
+@#,iooutputfont{(1 2)}
+@#,tt{>} v
+@#,racketresult['(1 2)]
+@#,tt{>} @#,tt{_}
+]
 
 Depending on the input operation, you may enter more text into an
 input box than is consumed. In that case, the leftover text remains in
@@ -484,25 +1191,25 @@ interaction, two values are provided in response to the first
 second @racket[(read)]:
 
 @racketblock[
- @#,tt{>} (read)
- @#,ioinputfont{5 6}
- @#,racketresult[5]
- @#,tt{>} (read)
- @#,racketresult[6]
- @#,tt{>} @#,tt{_}
- ]
+@#,tt{>} (read)
+@#,ioinputfont{5 6}
+@#,racketresult[5]
+@#,tt{>} (read)
+@#,racketresult[6]
+@#,tt{>} @#,tt{_}
+]
 
 The following example illustrates that submitting input with Return
 inserts a newline character into the input stream:
 
 @racketblock[
- @#,tt{>} (read)
- @#,ioinputfont{5}
- @#,racketresult[5]
- @#,tt{>} (read-char)
- @#,racketresult[#\newline]
- @#,tt{>} @#,tt{_}
- ]
+@#,tt{>} (read)
+@#,ioinputfont{5}
+@#,racketresult[5]
+@#,tt{>} (read-char)
+@#,racketresult[#\newline]
+@#,tt{>} @#,tt{_}
+]
 
 The @onscreen{eof} button that appears beside an input box inserts
 a single @racket[eof-object] into the input stream, but more IO may
@@ -510,11 +1217,11 @@ follow in a later sequence. For example, in the following interaction,
 the user typed @litchar{1} and then clicked the @onscreen{eof} button:
 
 @racketblock[
- @#,tt{>} (read-char)
- @#,ioinputfont{1}@#,racketresult[#\1]
- @#,tt{>} (read-char)
- @#,racketresultfont{#<eof>}
- ]
+@#,tt{>} (read-char)
+@#,ioinputfont{1}@#,racketresult[#\1]
+@#,tt{>} (read-char)
+@#,racketresultfont{#<eof>}
+]
 
 At this point, however, future interactions can still take place:
 new calls to input functions with open a new input box and new
@@ -588,8 +1295,8 @@ a Racket splice box.
 @section[#:tag "debugger"]{Graphical Debugging Interface}
 
 @margin-note{@bold{Tip:} Changing the name of a file in the middle of
- a debugging session will prevent the debugger from working properly on
- that file.}
+a debugging session will prevent the debugger from working properly on
+that file.}
 
 Like the @onscreen{Run} button, the @as-index{@onscreen{Debug} button}
 runs the program in the definitions window.  However, instead of
@@ -608,29 +1315,29 @@ While execution is paused, several buttons are available:
 
 @itemize[
 
- @item{The @as-index{@onscreen{Go} button} is enabled
-  whenever the program is paused.  It causes the program to resume
-  until it either completes, reaches a breakpoint, or raises an
-  unhandled exception.}
+    @item{The @as-index{@onscreen{Go} button} is enabled
+whenever the program is paused.  It causes the program to resume
+until it either completes, reaches a breakpoint, or raises an
+unhandled exception.}
 
- @item{The @as-index{@onscreen{Step} button} is enabled whenever
-  the program is paused.  It causes the program to make a single step
-  and then pause again.}
+    @item{The @as-index{@onscreen{Step} button} is enabled whenever
+the program is paused.  It causes the program to make a single step
+and then pause again.}
 
- @item{The @as-index{@onscreen{Over} button} is only enabled when
-  execution is paused at the start of an expression that is not in tail
-  position.  It sets a one-time breakpoint at the end of the
-  expression (represented by a yellow circle) and causes the program to
-  proceed.  When execution reaches the one-time breakpoint, it pauses
-  and removes that breakpoint.}
+    @item{The @as-index{@onscreen{Over} button} is only enabled when
+execution is paused at the start of an expression that is not in tail
+position.  It sets a one-time breakpoint at the end of the
+expression (represented by a yellow circle) and causes the program to
+proceed.  When execution reaches the one-time breakpoint, it pauses
+and removes that breakpoint.}
 
- @item{The @as-index{@onscreen{Out} button} is only enabled when
-  execution is paused within the context of another expression.  Like
-  the @onscreen{Over} button, it sets a one-time breakpoint and
-  continues execution.  In this case, the program stops upon returning
-  to the context or raising an unhandled exception.}
- 
- ]
+    @item{The @as-index{@onscreen{Out} button} is only enabled when
+execution is paused within the context of another expression.  Like
+the @onscreen{Over} button, it sets a one-time breakpoint and
+continues execution.  In this case, the program stops upon returning
+to the context or raising an unhandled exception.}
+
+]
 
 If the program is running (not paused), then only the @as-index{Pause}
 button will be enabled.  Clicking it will interrupt execution and
@@ -649,50 +1356,50 @@ additional actions:
 
 @itemize[
 
- @item{Hovering the mouse cursor over a parenthesis may reveal a
-  pink circle.  If so, right-clicking or control-clicking (Mac OS X)
-  will open a menu with options to @onscreen{Pause at this point} or
-  @onscreen{Continue to this point}.  The former sets an ordinary
-  breakpoint at that location; the latter sets a one-time breakpoint and
-  resumes execution.  An ordinary breakpoint appears as a red circle,
-  and a one-time breakpoint appears as a yellow circle.
+    @item{Hovering the mouse cursor over a parenthesis may reveal a
+pink circle.  If so, right-clicking or control-clicking (Mac OS X)
+will open a menu with options to @onscreen{Pause at this point} or
+@onscreen{Continue to this point}.  The former sets an ordinary
+breakpoint at that location; the latter sets a one-time breakpoint and
+resumes execution.  An ordinary breakpoint appears as a red circle,
+and a one-time breakpoint appears as a yellow circle.
 
-  @bold{Tip:} If the debugged program is not a module, then the
-  @italic{first time} it is debugged, breakpoints will only become
-  available in expressions as they are evaluated.  However, the next
-  time the program is debugged, the debugger will remember the set of
-  breakable locations from the previous session.
+@bold{Tip:} If the debugged program is not a module, then the
+@italic{first time} it is debugged, breakpoints will only become
+available in expressions as they are evaluated.  However, the next
+time the program is debugged, the debugger will remember the set of
+breakable locations from the previous session.
 
-  @bold{Tip:} Clicking the @onscreen{Run} button after a debugging
-  session will cause all breakpoints to disappear from the definitions
-  window.  These breakpoints are not forgotten, and clicking
-  @onscreen{Debug} again will restore them.  However, breakpoints do
-  @italic{not} persist across restarts of DrRacket.}
+@bold{Tip:} Clicking the @onscreen{Run} button after a debugging
+session will cause all breakpoints to disappear from the definitions
+window.  These breakpoints are not forgotten, and clicking
+@onscreen{Debug} again will restore them.  However, breakpoints do
+@italic{not} persist across restarts of DrRacket.}
 
- @item{If execution is paused at the start of an expression, then
-  right-clicking or control-clicking (Mac OS X) on the green triangle
-  opens a menu with the option to @onscreen{Skip expression...}.
-  Selecting this opens a text box in which to enter a value for the
-  expression.  The expression is skipped, with the entered value
-  substituted for
-  it.}
- @item{If execution is paused at the end of an expression, then the
-  expression and its value are displayed to the left of the button bar.
-  Right-clicking or control-clicking (Mac OS X) on the green triangle
-  opens a menu with options to @onscreen{Print return value to console}
-  and @onscreen{Change return value...}.  The former displays the return
-  value in the interactions window; the latter opens a text box in which
-  to enter a substitute
-  value.}
- @item{Hovering the mouse cursor over a bound variable displays the
-  variable's name and value to the right of the button bar.
-  Right-clicking or control-clicking (Mac OS X) opens a menu with
-  options to @onscreen{Print value of <var> to console} or
-  @onscreen{(set! <var> ...)}.  The former displays the variable's value
-  in the interactions window; the latter opens a text box in which to
-  enter a new value for the variable.}
- 
- ]
+    @item{If execution is paused at the start of an expression, then
+right-clicking or control-clicking (Mac OS X) on the green triangle
+opens a menu with the option to @onscreen{Skip expression...}.
+Selecting this opens a text box in which to enter a value for the
+expression.  The expression is skipped, with the entered value
+substituted for it.}
+
+    @item{If execution is paused at the end of an expression, then the
+expression and its value are displayed to the left of the button bar.
+Right-clicking or control-clicking (Mac OS X) on the green triangle
+opens a menu with options to @onscreen{Print return value to console}
+and @onscreen{Change return value...}.  The former displays the return
+value in the interactions window; the latter opens a text box in which
+to enter a substitute value.}
+
+    @item{Hovering the mouse cursor over a bound variable displays the
+variable's name and value to the right of the button bar.
+Right-clicking or control-clicking (Mac OS X) opens a menu with
+options to @onscreen{Print value of <var> to console} or
+@onscreen{(set! <var> ...)}.  The former displays the variable's value
+in the interactions window; the latter opens a text box in which to
+enter a new value for the variable.}
+
+]
 
 @subsection{Stack View Pane}
 
@@ -777,7 +1484,7 @@ to have an expression that starts your program running in the
 definitions window before creating the executable.
 
 Once you are satisfied with your program, choose the @onscreen{Create
- Executable...}  menu item from the @onscreen{Racket} menu. You will be
+Executable...}  menu item from the @onscreen{Racket} menu. You will be
 asked to choose an executable file name or an archive file name. In
 the latter case, unpack the generated archive (on this machine or
 another one) to access the executable. In either case, you will be
@@ -789,34 +1496,34 @@ The result of @onscreen{Create Executable...} is either a
 a @defterm{distribution archive}, and it uses either a
 @defterm{Racket} (textual) or @defterm{GRacket} (graphical) engine.
 For programs implemented with certain languages, @onscreen{Create
- Executable...}  will prompt you to choose the executable type and
+Executable...}  will prompt you to choose the executable type and
 engine, while other languages support only one type or engine.
 
 Each type has advantages and disadvantages:
 
 @itemize[
 
- @item{A @deftech{launcher executable} uses the latest version of
-  your program source file when it starts. It also
-  accesses library files from your DrRacket installation when it runs. Since a launcher
+  @item{A @deftech{launcher executable} uses the latest version of
+  your program source file when it starts. It also accesses library
+  files from your DrRacket installation when it runs. Since a launcher
   executable contains specific paths to access those files, launchers
   usually cannot be moved from one machine to another.}
 
  @item{A @deftech{stand-alone executable} embeds a compiled copy of
-  your program and any Racket libraries that your program uses. When
-  the executable is started, it uses the embedded copies and does not
-  need your original source file. It may, however, access your DrRacket
-  installation for DLLs, frameworks, shared libraries, or helper
-  executables. Consequently, a stand-alone executable usually cannot be
-  moved from one machine to another.}
+ your program and any Racket libraries that your program uses. When
+ the executable is started, it uses the embedded copies and does not
+ need your original source file. It may, however, access your DrRacket
+ installation for DLLs, frameworks, shared libraries, or helper
+ executables. Consequently, a stand-alone executable usually cannot be
+ moved from one machine to another.}
 
  @item{A @deftech{distribution archive} packages a stand-alone
-  executable together with any needed DLLs, frameworks, shared
-  libraries, and helper executables. A distribution archive can be
-  unpacked and run on any machine with the same operating system as
-  yours.}
- 
- ]
+ executable together with any needed DLLs, frameworks, shared
+ libraries, and helper executables. A distribution archive can be
+ unpacked and run on any machine with the same operating system as
+ yours.}
+
+]
 
 In general, DrRacket's gives you the most options when it infers a
 language from a program's source. Most other languages only allow one
@@ -828,7 +1535,7 @@ only launchers.
 your executable. With debugging enabled, you will see a stack trace
 with error messages, but your program will run more slowly.  To
 disable debugging, open the language dialog, click the @onscreen{Show
- Details} button, and select @onscreen{No debugging or profiling}, if
+Details} button, and select @onscreen{No debugging or profiling}, if
 it is available.
 
 @section[#:tag "follow-log"]{Following Log Messages}

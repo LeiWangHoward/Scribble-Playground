@@ -19,21 +19,20 @@
  @d{e}
 ]
 
-3)line break rules:
+3)line breaking rules:
 
-starting with non white space:
+Only handle string inside {} or pure string
 
-Each paragraph shall not have more than 70 characters. The last "word"
-will be passed to the next line
+Each paragraph shall not have more/less than given character number(e.g. 70). The last few "words"
+will be passed to the next line, or some words from the next line will be pass back to current line
 
-starting with several white space:
-
-more than 65 char will be passed to next line
 4) Tips:
  whenever there is a "\n", this line has a white-space
  (send a-text set-line-spacing space) → void?
  space : (and/c real? (not/c negative?))
 |#
+
+;;5) helper function: {}
 (require framework)
 
 ;;first basic position classify method: text -> position classify of the whole text
@@ -41,13 +40,22 @@ more than 65 char will be passed to next line
   (for/list ([x (in-range (send txt last-position))])
     (send txt classify-position x)))
 
-;;is-at-sign: check if the given position is an @: text position[natural] -> #t/#f
+;;is-at-sign?: check if the given position is an @: text position[natural] -> #t/#f
 (define (is-at-sign? txt posi)
   (and (equal? (send txt classify-position posi) 'parenthesis)
        (let-values ([(start end) (send txt get-token-range posi)])
          (and (equal? start posi)
               (equal? end (+ posi 1))))
        (equal? #\@ (send txt get-character posi))))
+
+;;is-non-empty-paragraph?: check if the given paragraph is a valid paragraph: text position[natural] -> #t/#f
+(define (is-non-empty-paragraph? txt para)
+  (let* ([para-start (send txt paragraph-start-position para)]
+         [para-start-skip-space (send txt skip-whitespace para-start 'forward #t)];skip comment also
+         [para-check (send txt position-paragraph para-start-skip-space)])
+    (if (= para-check para)
+        #t
+        #f)))
 
 ;;indent-racket-func: text position[natural] ->  1 for first #\(, or #f
 (define (indent-racket-func txt posi)
@@ -60,6 +68,7 @@ more than 65 char will be passed to next line
               1
               #f))
         #f)))
+
 ;;count-parens: text position[natural] ->  number of parens including current one
 (define (count-parens txt posi)
   (define count 0)
@@ -76,7 +85,6 @@ more than 65 char will be passed to next line
 ;;determine-spaces : text position[natural] -> spaces in front of current paragraph
 (define (determine-spaces txt posi)
   (let* ([current-para (send txt position-paragraph posi)]
-         ;;[para-paren (count-parens txt posi)]
          [para-start (send txt paragraph-start-position current-para)]
          [para-start-skip-space (send txt skip-whitespace para-start 'forward #t)];skip comment also
          [para-check (send txt position-paragraph para-start-skip-space)])
@@ -93,12 +101,53 @@ more than 65 char will be passed to next line
                          (if (= current-para this-para)
                              0
                              (add1 (- prev-posi this-para-start)))))
-                      ;;if it is a racket function
+                      ;;if it is inside a racket function and not the first line of the racket function
                       ((equal? #\( (send txt get-character prev-posi))
                        (indent-racket-func txt prev-posi));call corresponding function
                       (else (count-parens txt sexp-start-posi))))  
               sexp-start-posi))
         #f)))
+
+;;adjust-para-width : text position[natural] width[natural] -> modify the paragraph of given position if its
+;;                    inside "{}" and excedded the width limit, or return #f
+(define (adjust-para-width txt posi width)
+  (let* ([current-para (send txt position-paragraph posi)]
+         [next-para (add1 current-para)]
+         [para-start (send txt paragraph-start-position current-para)]
+         [para-skip-space (send txt skip-whitespace para-start 'forward #t)]
+         [current-parent (send txt backward-containing-sexp para-skip-space 0)]
+         [next-para-start (send txt paragraph-start-position next-para)]
+         [next-skip-space (send txt skip-whitespace next-para-start 'forward #t)]
+         [next-parent (send txt backward-containing-sexp next-skip-space 0)])
+    (if (and (equal? current-parent next-parent);1) both string 2) both inside same {} or []
+             (is-non-empty-paragraph? txt current-para));current paragraph shall not be empty
+        (let* ([para-end (send txt paragraph-end-position current-para)]
+               [current-para-length (add1 (- para-end para-start))]
+               [difference (add1 (- current-para-length width))]
+               [new-end 0])
+          (cond ((> difference 0);too long
+                 (begin
+                   (when (is-non-empty-paragraph? txt next-para)
+                     (begin 
+                       (send txt delete para-end (add1 para-end))
+                       (send txt insert #\ (add1 para-end))));non empty? combine 
+                   (for/first ([new-break (in-range (- para-end difference) para-end 1)]
+                               #:when (equal? #\ (send txt get-character new-break)))
+                     (begin
+                       (send txt delete (sub1 new-break) new-break) ;delete space
+                       (send txt insert #\newline new-break)))))
+                ((< difference 0);too short
+                 (if (is-non-empty-paragraph? txt next-para)
+                     (begin
+                       (send txt delete para-end (add1 para-end))
+                       (send txt insert #\ para-end)
+                       (for/first ([new-break (in-range (- para-end difference) para-end -1)]
+                                   #:when (equal? #\ (send txt get-character new-break)))
+                         (send txt insert #\newline (add1 new-break))))
+                     #f))
+                (else #f)))
+        #f)))
+
 
 (define (reindent-and-save in outs)
   (define t (new racket:text%))
@@ -111,17 +160,12 @@ more than 65 char will be passed to next line
     #:exists 'truncate))
 
 (define (indent-all t)
-  (for ([i (in-range (send t last-paragraph) -1 -1)]);counting down from the last paragraph
-         ;(in-range (send t last-paragraph) 1)])
+  (for ([i ;(in-range (send t last-paragraph) -1 -1)]);counting down from the last paragraph
+         (in-range 0 (send t last-paragraph) 1)]);counting up from first paragraph
     (define posi (send t paragraph-start-position i))
-    ;;for line break
-    (define para-end (send t paragraph-end-position i))
-    (define para-length (add1 (- para-end posi)))
-    (when (> para-length 60)
-      #t;(adjust-para t i para-end posi)
-      (set! posi (send t paragraph-start-position i)))
     (define amount (determine-spaces t posi))
-    (adjust-spaces t i amount posi)))
+    (begin (adjust-spaces t i amount posi)
+           (adjust-para-width t posi 50))))
 
 (define (adjust-spaces t para amount posi)
   (define posi-skip-space (send t skip-whitespace posi 'forward #f));not skip comments
@@ -132,19 +176,6 @@ more than 65 char will be passed to next line
       (send t insert (make-string amount #\ ) posi))) 
   #t);;delete and insert
 
-(define (adjust-para t para para-end posi); posi is paragraph start
-  (define posi-skip-space (send t skip-whitespace posi 'forward #f));not skip comments
-  (define new-length (add1 (- para-end posi-skip-space)))
-  (when (> 60 new-length)
-    (define new-start (- para-end 60))
-    (for ([i (in-range 5)])
-      (let ([new-break (- new-start i)])
-       (when (equal? #\ (send t get-character new-break))
-           (set! new-start new-break))))
-    (send t delete (sub1 posi) posi-skip-space);clear out all white space, and previous line breaker
-    (send t insert #\ (sub1 posi))
-    (send t insert #\newline new-start))
-  #t)
 (reindent-and-save (collection-file-path "interface-essentials.scrbl" "scribblings" "drracket") "x_auto.scrbl")
 ;;note 1: blank lines/comments cause the skip-space position larger than paragraph end position
 
@@ -182,6 +213,17 @@ more than 65 char will be passed to next line
                 #f)
   (check-equal? (is-at-sign? txt_1 20) #t)
   (check-equal? (is-at-sign? txt_1 22) #f)
+  
+  ;test (is-non-empty-paragraph? txt para)
+  (check-equal? (let ([t (new racket:text%)])
+                  (send t insert "(\n\nx)")
+                  (is-non-empty-paragraph? t 1))
+                #f)
+  (check-equal? (let ([t (new racket:text%)])
+                  (send t insert "(\n\nx)")
+                  (is-non-empty-paragraph? t 0))
+                #t)
+  
   ;test determine-spaces
   (check-equal? (determine-spaces txt_1 15) #f)
   (check-equal? (determine-spaces txt_1 21) #f)
