@@ -57,6 +57,19 @@ will be passed to the next line, or some words from the next line will be pass b
         #t
         #f)))
 
+;;delete-end-spaces: delete all #\space at the end of current paragraph
+(define (delete-end-spaces txt para)
+  (let* ([para-end (send txt paragraph-end-position para)]
+         [last-non-white (send txt skip-whitespace para-end 'backward #f)]);do not skip comment
+    (send txt delete last-non-white para-end)))
+
+;;delete-end-spaces: delete all #\space at the beginning of current paragraph
+(define (delete-start-spaces txt para)
+  (let* ([para-start (send txt paragraph-start-position para)]
+         [first-non-white (send txt skip-whitespace para-start 'forward #f)]);do not skip comment
+    (when (> first-non-white para-start)
+      (send txt delete para-start first-non-white))))
+
 ;;indent-racket-func: text position[natural] ->  1 for first #\(, or #f
 (define (indent-racket-func txt posi)
   (let* ([prev-posi (sub1 posi)]
@@ -115,40 +128,55 @@ will be passed to the next line, or some words from the next line will be pass b
          [next-para (add1 current-para)]
          [para-start (send txt paragraph-start-position current-para)]
          [para-skip-space (send txt skip-whitespace para-start 'forward #t)]
-         [current-parent (send txt backward-containing-sexp para-skip-space 0)]
+         [current-para-parent (send txt backward-containing-sexp para-skip-space 0)]
          [next-para-start (send txt paragraph-start-position next-para)]
          [next-skip-space (send txt skip-whitespace next-para-start 'forward #t)]
-         [next-parent (send txt backward-containing-sexp next-skip-space 0)])
-    (if (and (equal? current-parent next-parent);1) both string 2) both inside same {} or []
+         [next-para-parent (send txt backward-containing-sexp next-skip-space 0)])
+    ;;filter out all empty space at the end of current paragraph and the next paragraph
+    (delete-end-spaces txt next-para)
+    (if (and (equal? current-para-parent next-para-parent);1) both string 2) both inside same {} or []
              (is-non-empty-paragraph? txt current-para));current paragraph shall not be empty
-        (let* ([para-end (send txt paragraph-end-position current-para)]
-               [current-para-length (add1 (- para-end para-start))]
-               [difference (add1 (- current-para-length width))]
-               [new-end 0])
-          (cond ((> difference 0);too long
-                 (begin
+        (begin
+          (delete-end-spaces txt current-para)
+          (let* ([para-end (send txt paragraph-end-position current-para)]
+                 [current-para-length (add1 (- para-end para-start))]
+                 [difference (add1 (- current-para-length width))])
+            ;first clean up all start spsces at the next paragraph
+            (cond ((> difference 0);too long
                    (when (is-non-empty-paragraph? txt next-para)
-                     (begin 
-                       (send txt delete para-end (add1 para-end))
-                       (send txt insert #\ (add1 para-end))));non empty? combine 
+                     ;if next paragraph not empty, replace newline with space
+                     (delete-end-spaces txt next-para) ;delete all space at end
+                     (delete-start-spaces txt next-para);delete all space in front
+                     (send txt delete (add1 para-end) 'back)
+                     ;delete #\newline, now para-end represents (add1 para-end) 
+                     (send txt insert #\space para-end));insert space
                    (for/first ([new-break (in-range (- para-end difference) para-end 1)]
-                               #:when (equal? #\ (send txt get-character new-break)))
-                     (begin
-                       (send txt delete (sub1 new-break) new-break) ;delete space
-                       (send txt insert #\newline new-break)))))
-                ((< difference 0);too short
-                 (if (is-non-empty-paragraph? txt next-para)
-                     (begin
-                       (send txt delete para-end (add1 para-end))
-                       (send txt insert #\ para-end)
-                       (for/first ([new-break (in-range (- para-end difference) para-end -1)]
-                                   #:when (equal? #\ (send txt get-character new-break)))
-                         (send txt insert #\newline (add1 new-break))))
-                     #f))
-                (else #f)))
+                               #:when (equal? #\space (send txt get-character new-break)))
+                     (send txt delete (add1 new-break) 'back) 
+                     ;delete #\space, new-break now represents the non-space char after
+                     (send txt insert #\newline new-break)))
+                  ((< difference 0);too short
+                   (when (is-non-empty-paragraph? txt next-para);non-empty? give back chars
+                     (delete-end-spaces txt next-para) ;delete all space at end
+                     (delete-start-spaces txt next-para);delete all space in front
+                     (send txt delete (add1 para-end) 'back)
+                     (send txt insert #\space para-end)
+                     (define next-end (send txt paragraph-end-position next-para))
+                     (for/first ([new-break (in-range (- para-end difference) next-end 1)]
+                                 #:when (equal? #\space (send txt get-character new-break)))
+                       (send txt insert #\newline new-break))))
+                  (else #f))))
         #f)))
 
-
+;;keymap%
+#|
+[9/12/13 3:25:40 PM] Robby Findler: (define f (new frame% [label ""] [width 400] [height 600]))
+[9/12/13 3:25:43 PM] Robby Findler: (define t (new text%))
+[9/12/13 3:25:55 PM] Robby Findler: (define ec (new editor-canvas% [parent f] [editor t]))
+[9/12/13 3:26:00 PM] Robby Findler: (send t set-keymap …)
+[9/12/13 3:26:06 PM] Robby Findler: (send f show #t)
+(send t load-file ….)
+|#
 (define (reindent-and-save in outs)
   (define t (new racket:text%))
   (send t load-file in)
@@ -274,10 +302,33 @@ will be passed to the next line, or some words from the next line will be pass b
   (check-equal? (indent-racket-func txt_9 6) #f)
   (check-equal? (determine-spaces txt_9 13) #f) 
   (check-equal? (determine-spaces txt_9 4) 1)
-  ;;(check-equal? (send txt_9 backward-containing-sexp 13 0) 11) ;play
-  ;(check-equal? (send txt_9 backward-containing-sexp 9 0) 3) ;play
-  ;(check-equal? (send txt_8 get-character 22) #\g)
-  ;;first test: able to process string correctly
+  
+  ;;test cases for:delete-end-spaces delete-start-spaces
+  (check-equal? (let ([t (new racket:text%)])
+                  (send t insert "{abcde   \nfgh\n}")
+                  (delete-end-spaces t 0)
+                  (send t get-character 6)) #\newline)
+  (check-equal? (let ([t (new racket:text%)])
+                  (send t insert "{abcde   \n\n3\n}")
+                  (delete-end-spaces t 0)
+                  (send t get-character 7)) #\newline)
+  
+  (check-equal? (let ([t (new racket:text%)])
+                  (send t insert "  {abcde\nfgh\n}")
+                  (delete-start-spaces t 0)
+                  (send t get-character 0)) #\{)
+  #|(check-equal? (let ([t (new racket:text%)])
+                  (send t insert "{abcde   \nfgh\n}")
+                  (send t delete 2 'back)
+                  (send t get-character 1)) #\a)|# ;;deletes the char at position 1
+  ;;test cases for: adjust-para-width
+  ;;todo: how to compare text string!
+  #|(check-equal? (let ([t (new racket:text%)])
+                  (send t insert "{abcde\nfgh\n}")
+                  (adjust-para-width t 1 4)
+                  (display t))
+                "abcd\nefgh\n")|#
+  
   ;(check-equal? (send txt_4 last-position) 57)
   #|(check-equal? (txt-position-classify (txt-position-classify txt_2))  
         '(other other other other other other other other other other 
@@ -315,8 +366,8 @@ will be passed to the next line, or some words from the next line will be pass b
                 '#\()
   (check-equal? (let ([t2 (new racket:text%)])
                   (send t2 insert " woshishui")
-                  (send t2 insert "  " 0)
-                  (send t2 get-character 3))
-                '#\w)
+                  (send t2 insert " 4" 1)
+                  (send t2 get-character 2))
+                '#\4)
   (check-equal? (make-string 3 #\ ) "   ")|#
   )
