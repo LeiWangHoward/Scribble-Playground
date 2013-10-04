@@ -31,8 +31,6 @@ will be passed to the next line, or some words from the next line will be pass b
  (send a-text set-line-spacing space) → void?
  space : (and/c real? (not/c negative?))
 |#
-
-;;5) helper function: {}
 (require framework)
 
 ;;first basic position classify method: text -> position classify of the whole text
@@ -76,11 +74,14 @@ will be passed to the next line, or some words from the next line will be pass b
          [back-one-level (send txt backward-containing-sexp prev-posi 0)])
     (if back-one-level
         (let ([paren (sub1 back-one-level)])
-          (if (or (equal? #\{ (send txt get-character paren))
-                  (equal? #\[ (send txt get-character paren)))
-              1
-              #f))
-        #f)))
+          (cond ((equal? #\{ (send txt get-character paren)) 1)
+                ((equal? #\[ (send txt get-character paren));might be inside cond etc
+                 (let ([back-two-level (send txt backward-containing-sexp (sub1 paren) 0)])
+                   (if back-two-level
+                       #f
+                       1)))
+                (else #f)))
+              #f)));;#f needs to be replaced by racket indentation function
 
 ;;count-parens: text position[natural] ->  number of parens including current one
 (define (count-parens txt posi)
@@ -134,8 +135,13 @@ will be passed to the next line, or some words from the next line will be pass b
          [next-para-parent (send txt backward-containing-sexp next-skip-space 0)])
     ;;filter out all empty space at the end of current paragraph and the next paragraph
     (delete-end-spaces txt next-para)
-    (if (and (equal? current-para-parent next-para-parent);1) both string 2) both inside same {} or []
-             (is-non-empty-paragraph? txt current-para));current paragraph shall not be empty
+    (if (and (is-non-empty-paragraph? txt current-para); current paragraph shall not be empty
+             (or (equal? current-para-parent next-para-parent);1) both string 2) same level:inside same {} or []
+                 (equal? current-para 
+                         (if next-para-parent
+                             (send txt position-paragraph next-para-parent)
+                             "not-possible-equal"))))
+             ;next paragraph's parent inside current paragraph
         (begin
           (delete-end-spaces txt current-para)
           (let* ([para-end (send txt paragraph-end-position current-para)]
@@ -168,14 +174,15 @@ will be passed to the next line, or some words from the next line will be pass b
                   (else #f))))
         #f)))
 
-;;keymap%
 #|
-[9/12/13 3:25:40 PM] Robby Findler: (define f (new frame% [label ""] [width 400] [height 600]))
-[9/12/13 3:25:43 PM] Robby Findler: (define t (new text%))
-[9/12/13 3:25:55 PM] Robby Findler: (define ec (new editor-canvas% [parent f] [editor t]))
-[9/12/13 3:26:00 PM] Robby Findler: (send t set-keymap …)
-[9/12/13 3:26:06 PM] Robby Findler: (send f show #t)
-(send t load-file ….)
+;;keymap%, finalize indentation functions
+(require racket/gui)
+(define f (new frame% [label ""] [width 400] [height 600]))
+(define t (new text%))
+(define ec (new editor-canvas% [parent f] [editor t]))
+;(send t set-keymap …)
+(send f show #t)
+;(send t load-file ….)
 |#
 (define (reindent-and-save in outs)
   (define t (new racket:text%))
@@ -193,7 +200,8 @@ will be passed to the next line, or some words from the next line will be pass b
     (define posi (send t paragraph-start-position i))
     (define amount (determine-spaces t posi))
     (begin (adjust-spaces t i amount posi)
-           (adjust-para-width t posi 50))))
+           (adjust-para-width t posi 50)
+           )))
 
 (define (adjust-spaces t para amount posi)
   (define posi-skip-space (send t skip-whitespace posi 'forward #f));not skip comments
@@ -275,8 +283,7 @@ will be passed to the next line, or some words from the next line will be pass b
   (define txt_5 (new racket:text%))
   (send txt_5 insert "#lang scribble/base\n@boldlist{@me{item1}\n@me{item2}\n}")
   (check-equal? (determine-spaces txt_5 31) #f)
-  (check-equal? (determine-spaces txt_5 46) 1);;
-  ;(check-equal? (count-parens txt_5 46) 1);;play
+  (check-equal? (determine-spaces txt_5 46) 1)
   
   (define txt_6 (new racket:text%))
   (send txt_6 insert "@list{@me{item1}\n\n@me{item2}\n}")
@@ -298,25 +305,63 @@ will be passed to the next line, or some words from the next line will be pass b
   (define txt_9 (new racket:text%))
   (send txt_9 insert "@a[\n(b c)\n(d\n[(e) f]\n[g h])\n]\n")
   (check-equal? (indent-racket-func txt_9 4) 1)
-  ;(check-equal? (indent-racket-func txt_9 10) 1)
   (check-equal? (indent-racket-func txt_9 6) #f)
   (check-equal? (determine-spaces txt_9 13) #f) 
   (check-equal? (determine-spaces txt_9 4) 1)
+  
+  (define txt_10 (new racket:text%))
+  (send txt_10 insert "(d f\n(l [()\n(f ([a (b c)])\n(d e)))])")
+  (check-equal? (indent-racket-func txt_10 12) #f)      
   
   ;;test cases for:delete-end-spaces delete-start-spaces
   (check-equal? (let ([t (new racket:text%)])
                   (send t insert "{abcde   \nfgh\n}")
                   (delete-end-spaces t 0)
-                  (send t get-character 6)) #\newline)
+                  (send t get-text)) "{abcde\nfgh\n}")
   (check-equal? (let ([t (new racket:text%)])
                   (send t insert "{abcde   \n\n3\n}")
                   (delete-end-spaces t 0)
-                  (send t get-character 7)) #\newline)
+                  (send t get-text)) "{abcde\n\n3\n}")
   
   (check-equal? (let ([t (new racket:text%)])
                   (send t insert "  {abcde\nfgh\n}")
                   (delete-start-spaces t 0)
-                  (send t get-character 0)) #\{)
+                  (send t get-text)) "{abcde\nfgh\n}")
+  
+  (check-equal? (let ([t (new racket:text%)])
+                  (send t insert "abc@d{e eee\nff}\n")
+                  (adjust-para-width t 9 7) 
+                  (send t get-text))
+                "abc@d{e\neee ff}\n")
+
+  
+  (check-equal? (let ([t (new racket:text%)])
+                  (send t insert "abc@d{e eee\nff fffffffff}\n")
+                  (adjust-para-width t 8 14) 
+                  (send t get-text))
+                "abc@d{e eee ff\n fffffffff}\n");;keep the space, does not matter
+  
+  (check-equal? (let ([t (new racket:text%)])
+                  (send t insert "@a[bb bb\n@cccc{dd dd\n\nee ee}\nff ff]")
+                  (adjust-para-width t 31 12) ;"f"
+                  (send t get-text))
+                "@a[bb bb\n@cccc{dd dd\n\nee ee}\nff ff]")
+;;test cases: 1. 
+  #|1-1 with tab infront
+    1-2 do nothing to "fdjkld]", not the same level as previous line
+@racket[ajcdef
+        @hello{fjdlafjdkla fjdklafjkdlas
+               
+         fjdkalfjdkal jkfldajklfda}
+        fdjkld]
+
+2. the row of buttons in DrRacket contains a miniature button with the @index['("filename button")]{current file's
+ name}. 
+break from the @ sign, not same level, or in other words, don't chunk the previous string to it.
+one more option
+|#
+   ) 
+   
   #|(check-equal? (let ([t (new racket:text%)])
                   (send t insert "{abcde   \nfgh\n}")
                   (send t delete 2 'back)
@@ -344,17 +389,6 @@ will be passed to the next line, or some words from the next line will be pass b
   (check-equal? (send txt_4 backward-containing-sexp 35 0) 30);;[@item{item1}
   |#
   #|
-  (define txt_6 (new racket:text%))
-  (send txt_6 insert "#lang racket\n(define (me)\n(let ((a 1))\n(b (c 1)\n(d 2))))")
-  (check-equal? (send txt_6 backward-containing-sexp 46 100) 43)
-  (check-equal? (send txt_6 backward-containing-sexp 40 100) 40)
-  (check-equal? (send txt_6 backward-containing-sexp 42 100) 40)
-  
-  (check-equal? (send txt_4 backward-containing-sexp 29 (send txt_4 last-position)) #f);;[@item...
-  
-  (check-equal? (send txt_5 backward-containing-sexp 33 (send txt_5 last-position)) 30);;@me{item
-  (check-equal? (send txt_5 backward-containing-sexp 36 (send txt_5 last-position)) 34);;item
-  (check-equal? (send txt_5 backward-containing-sexp 32 (send txt_5 last-position)) 30)
   
   ;(check-equal? (let-values ([(start end)(send txt_1 get-token-range 22)]) end) 23);based on paragraph
   
@@ -370,4 +404,3 @@ will be passed to the next line, or some words from the next line will be pass b
                   (send t2 get-character 2))
                 '#\4)
   (check-equal? (make-string 3 #\ ) "   ")|#
-  )
