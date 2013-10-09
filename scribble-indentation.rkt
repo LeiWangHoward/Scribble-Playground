@@ -1,5 +1,6 @@
 #lang racket
-#|simple rules:
+#|
+Indentation rules:
 
 1)tab adjusted
 
@@ -19,23 +20,19 @@
  @d{e}
 ]
 
-3)line breaking rules:
+Line breaking rules:
 
-Only handle string inside {} or pure string
+1)Only handle string inside {} or pure string
 
-Each paragraph shall not have more/less than given character number(e.g. 70). The last few "words"
-will be passed to the next line, or some words from the next line will be pass back to current line
+2)Each paragraph shall not have more/less than given character number(e.g. 70). The last few "words"
+will be passed to the next line, or some "words" from the next line will be pass back to current line|#
 
-4) Tips:
- whenever there is a "\n", this line has a white-space
- (send a-text set-line-spacing space) → void?
- space : (and/c real? (not/c negative?))
-|#
 (require framework)
 
-;;first basic position classify method: text -> position classify of the whole text
-(define (txt-position-classify txt)
-  (for/list ([x (in-range (send txt last-position))])
+;;first basic position classify method: text start[natural] end[natural] ->
+;position classify of the text in certain range
+(define (txt-position-classify txt start end)
+  (for/list ([x (in-range start end 1)])
     (send txt classify-position x)))
 
 ;;is-at-sign?: check if the given position is an @: text position[natural] -> #t/#f
@@ -69,6 +66,19 @@ will be passed to the next line, or some words from the next line will be pass b
     (when (> first-non-white para-start)
       (send txt delete para-start first-non-white))))
 
+;;count-parens: text position[natural] ->  number of parens including current one
+(define (count-parens txt posi)
+  (define count 0)
+  (do ([p posi (send txt backward-containing-sexp p 0)])
+    ((not p) count)
+    (begin
+      (set! p (sub1 p))
+      ;(displayln (send txt get-character p))
+      ;(displayln p)
+      (when (or (equal? #\{ (send txt get-character p))
+                (equal? #\[ (send txt get-character p)))
+        (set! count (add1 count))))))
+
 ;;indent-racket-func: text position[natural] ->  1 for first #\(, or #f
 (define (indent-racket-func txt posi)
   (let* ([prev-posi (sub1 posi)]
@@ -83,19 +93,6 @@ will be passed to the next line, or some words from the next line will be pass b
                        1)))
                 (else #f)))
         #f)));;#f needs to be replaced by racket indentation function
-
-;;count-parens: text position[natural] ->  number of parens including current one
-(define (count-parens txt posi)
-  (define count 0)
-  (do ([p posi (send txt backward-containing-sexp p 0)])
-    ((not p) count)
-    (begin
-      (set! p (sub1 p))
-      ;(displayln (send txt get-character p))
-      ;(displayln p)
-      (when (or (equal? #\{ (send txt get-character p))
-                (equal? #\[ (send txt get-character p)))
-        (set! count (add1 count))))))
 
 ;;determine-spaces : text position[natural] -> spaces in front of current paragraph
 (define (determine-spaces txt posi)
@@ -126,76 +123,8 @@ will be passed to the next line, or some words from the next line will be pass b
 ;;adjust-para-width : text position[natural] width[natural] -> modify the paragraph of given position if its
 ;;                    inside "{}" and excedded the width limit, or return #f
 (define (adjust-para-width txt posi width)
-  (let* ([current-para (send txt position-paragraph posi)]
-         [next-para (add1 current-para)]
-         [para-start (send txt paragraph-start-position current-para)]
-         [para-skip-space (send txt skip-whitespace para-start 'forward #t)]
-         [current-para-parent (send txt backward-containing-sexp para-skip-space 0)]
-         [next-para-start (send txt paragraph-start-position next-para)]
-         [next-skip-space (send txt skip-whitespace next-para-start 'forward #t)]
-         [next-para-parent (send txt backward-containing-sexp next-skip-space 0)])
-    ;;filter out all empty space at the end of current paragraph and the next paragraph
-    (delete-end-spaces txt next-para)
-    (if (and (is-non-empty-paragraph? txt current-para); current paragraph shall not be empty
-             (or (equal? current-para-parent next-para-parent);1) both string 2) same level:inside same {} or []
-                 (equal? current-para 
-                         (if next-para-parent
-                             (send txt position-paragraph next-para-parent)
-                             "not-possible-equal"));;current paragraph contain parent of next paragraph
-                 (and (equal? (sub1 current-para)
-                              (if current-para-parent
-                                  (send txt position-paragraph current-para-parent)
-                                  "not-possible-equal"))
-                      (not (equal? (sub1 current-para)
-                                   (if next-para-parent
-                                       (send txt position-paragraph next-para-parent)
-                                       "not-possible-equal"))))))
-        ;next paragraph's parent inside current paragraph
-        (begin
-          (delete-end-spaces txt current-para)
-          (let* ([para-end (send txt paragraph-end-position current-para)]
-                 [current-para-length (add1 (- para-end para-start))]
-                 [difference (add1 (- current-para-length width))])
-            ;first clean up all start spsces at the next paragraph
-            (cond ((> difference 0);too long
-                   (when (is-non-empty-paragraph? txt next-para)
-                     ;if next paragraph not empty, replace newline with space
-                     (delete-end-spaces txt next-para) ;delete all space at end
-                     (delete-start-spaces txt next-para)) ;delete all space in front
-                   ;now handle current paragraph
-                   (unless (is-at-sign? txt next-skip-space) 
-                     (send txt delete (add1 para-end) 'back)
-                     ;delete #\newline, now para-end represents (add1 para-end) 
-                     (send txt insert #\space para-end));insert space
-                   (for/first ([new-break (in-range (- para-end difference) para-end 1)]
-                               #:when (equal? #\space (send txt get-character new-break)))
-                     (send txt delete (add1 new-break) 'back) 
-                     ;delete #\space, new-break now represents the non-space char after
-                     (send txt insert #\newline new-break)))
-                  ((< difference 0);too short
-                   (when (is-non-empty-paragraph? txt next-para);non-empty? give back chars
-                     (delete-end-spaces txt next-para) ;delete all space at end
-                     (delete-start-spaces txt next-para);delete all space in front
-                     (unless (is-at-sign? txt next-skip-space) 
-                       (send txt delete (add1 para-end) 'back)
-                       (send txt insert #\space para-end))
-                     (define next-end (send txt paragraph-end-position next-para))
-                     (for/first ([new-break (in-range (- para-end difference) next-end 1)]
-                                 #:when (equal? #\space (send txt get-character new-break)))
-                       (send txt insert #\newline new-break))))
-                  (else #f))))
-        #f)))
-
-#|
-;;keymap%, finalize indentation functions
-(require racket/gui)
-(define f (new frame% [label ""] [width 400] [height 600]))
-(define t (new text%))
-(define ec (new editor-canvas% [parent f] [editor t]))
-;(send t set-keymap …)
-(send f show #t)
-;(send t load-file ….)
-|#
+  #t)
+;;for play
 (define (reindent-and-save in outs)
   (define t (new racket:text%))
   (send t load-file in)
@@ -224,36 +153,15 @@ will be passed to the next line, or some words from the next line will be pass b
       (send t insert (make-string amount #\ ) posi))) 
   #t);;delete and insert
 
-(reindent-and-save (collection-file-path "interface-essentials.scrbl" "scribblings" "drracket") "x_auto.scrbl")
-;;note 1: blank lines/comments cause the skip-space position larger than paragraph end position
-
-;;;usage instructions
-;; position-line, given: a position start from 0, return line number it is at
-;(send txt3 position-line 20)
-
-;; backward-match, backward-containing-sexp, forward-match
-; beckward-match:given ) position find ( position
-; forward-match:given ( position find ) position
-
-
-;; position-paragraph (method of text%)  provided from racket/gui/base, racket/gui
-;; given a position, return what paragraph it is at
-;(send txt2 position-paragraph 24)
-
-;; paragraph-end-position (method of text%)  provided from racket/gui/base, racket/gui
-;; return the position before invisible item(newline)
-;(send txt2 paragraph-end-position 0)
-
-;; paragraph-start-position (method of text%)  provided from racket/gui/base, racket/gui
-;(send txt2 paragraph-start-position 0)
-
-;;[txt-length (send txt last-position)]
-;[para_end (send txt paragraph-end-position current_para)]
+;(reindent-and-save (collection-file-path "interface-essentials.scrbl" "scribblings" "drracket") "x_auto.scrbl")
+;;test cases
 (module+ test
   (require rackunit)
   (define txt_1 (new racket:text%))
-  (send txt_1 insert "#lang scribble/base\n@f{x}")
+  (send txt_1 insert "#lang scribble/base\n@f{x}\nghjhgjhgjhg")
   
+  ;test txt-position-classify
+  (check-equal? (txt-position-classify txt_1 0 28) #t)
   ;test is-at-sign
   (check-equal? (let ([t (new racket:text%)])
                   (send t insert "(x)")
@@ -372,62 +280,4 @@ will be passed to the next line, or some words from the next line will be pass b
                   (send t insert "aaa bbb ccc\n @ddd{}")
                   (adjust-para-width t 6 8) ;"b"
                   (send t get-text))
-                "aaa bbb\nccc\n @ddd{}")
-  ;;test cases: 1. 
-  #|1-1 with tab infront
-    1-2 do nothing to "fdjkld]", not the same level as previous line
-@racket[ajcdef
-        @hello{fjdlafjdkla fjdklafjkdlas
-               
-         fjdkalfjdkal jkfldajklfda}
-        fdjkld]
-
-2. the row of buttons in DrRacket contains a miniature button with the @index['("filename button")]{current file's
- name}. 
-break from the @ sign, not same level, or in other words, don't chunk the previous string to it.
-one more option
-|#
-  ) 
-
-#|(check-equal? (let ([t (new racket:text%)])
-                  (send t insert "{abcde   \nfgh\n}")
-                  (send t delete 2 'back)
-                  (send t get-character 1)) #\a)|# ;;deletes the char at position 1
-;;test cases for: adjust-para-width
-;;todo: how to compare text string!
-#|(check-equal? (let ([t (new racket:text%)])
-                  (send t insert "{abcde\nfgh\n}")
-                  (adjust-para-width t 1 4)
-                  (display t))
-                "abcd\nefgh\n")|#
-
-;(check-equal? (send txt_4 last-position) 57)
-#|(check-equal? (txt-position-classify (txt-position-classify txt_2))  
-        '(other other other other other other other other other other 
-                other other other other other other other other other ;;19 other, represents #lang...
-                parenthesis symbol parenthesis white-space string parenthesis))|#
-#|
-  (check-equal? (send txt_4 backward-match 35 0) 31) ;;not sure about "cutoff"
-  (check-equal? (send txt_4 forward-match 29 100) 57) 
-  (check-equal? (send txt_2 forward-match 22 0) #f) 
-  (check-equal? (send txt_4 forward-match 31 0) 35)
-  (check-equal? (send txt_4 forward-match 43 0) 44) 
-  (check-equal? (send txt_4 backward-containing-sexp 29 0) 0);;start from #lang???
-  (check-equal? (send txt_4 backward-containing-sexp 35 0) 30);;[@item{item1}
-  |#
-#|
-  
-  ;(check-equal? (let-values ([(start end)(send txt_1 get-token-range 22)]) end) 23);based on paragraph
-  
-  ;(check-equal? (send txt_1 forward-match 22 100) 25) |#
-#|(check-equal? (let ([t (new racket:text%)])
-                  (send t insert "  (niubi)")
-                  (send t delete 0 2)
-                  (send t get-character 0))
-                '#\()
-  (check-equal? (let ([t2 (new racket:text%)])
-                  (send t2 insert " woshishui")
-                  (send t2 insert " 4" 1)
-                  (send t2 get-character 2))
-                '#\4)
-  (check-equal? (make-string 3 #\ ) "   ")|#
+                "aaa bbb\nccc\n @ddd{}"))
