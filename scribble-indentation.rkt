@@ -53,6 +53,14 @@ will be passed to the next line, or some "words" from the next line will be pass
                                            '(#\newline #\return)))))
       #t)))
 
+;;not-empty?: classify results[list] -> #t/#f
+(define (para-not-empty? classify-lst) ;;we consider 'other  and 'comment as empty
+  (if (or (member 'parenthesis classify-lst)
+          (member 'string classify-lst)
+          (member 'symbol classify-lst))
+      #t
+      #f))
+
 ;;delete-end-spaces: delete all #\space at the end of current paragraph
 (define (delete-end-spaces txt para)
   (let* ([para-end (send txt paragraph-end-position para)]
@@ -120,10 +128,56 @@ will be passed to the next line, or some "words" from the next line will be pass
               sexp-start-posi))
         #f)))
 
+;;select-cut-option : text start[natural] end[natural] -> cut the line by selecting 
+;;1) breake whole @... to next line, 
+;;2) keep @.... in current line 
+;;3) if it is a simple string, just cut it
+(define (select-cut-option txt start len width classify-lst)
+  (let ([adjust-result (list-ref classify-lst (sub1 width))]);;get the "end" position adjust result
+    (cond ((equal? adjust-result 'string) 
+           (for/first ([new-break (in-range (+ start width) (+ start len))] ;;todo: make it search back also
+                       #:when (equal? #\space (send txt get-character new-break)))
+             (send txt delete (add1 new-break) 'back)
+             (send txt insert #\newline new-break)));;replace the #\space with #\newline
+          ;((equal? adjust-result 'symbol) #t);;inside @
+          ;((equal? adjust-result 'parenthesis) #t) ;;could be @
+          ;;'symbol 'parenthesis or 'space
+          (else (let ([string-posi 
+                       (for/last ([posi (in-range width)] 
+                                  #:when (equal? 'string (list-ref classify-lst posi)))
+                         posi)])
+                  (when (< (- width string-posi) (- len width))
+                    (send txt insert #\newline (+ start string-posi))))))))
+
+
 ;;adjust-para-width : text position[natural] width[natural] -> modify the paragraph of given position if its
-;;                    inside "{}" and excedded the width limit, or return #f
+;;                    excedded the width limit, shorter than the limit, or return #f
 (define (adjust-para-width txt posi width)
-  #t)
+  (let* ([para-num (send txt position-paragraph posi)]
+         [para-start (send txt paragraph-start-position para-num)]
+         [para-end (send txt paragraph-end-position para-num)]
+         [para-len (add1 (- para-end para-start))]
+         [para-classify (txt-position-classify txt para-start para-end)])
+    (if (para-not-empty? para-classify)
+        (cond ((> para-len width)
+               (select-cut-option txt para-start para-len width para-classify)
+               (if (is-non-empty-paragraph? txt (+ para-num 2)) ;; next paragraph not empty
+                   (begin (delete-end-spaces txt (+ para-num 1))
+                          (delete-start-spaces txt (+ para-num 2))
+                          (let* ([nxt-para-num (+ para-num 2)]
+                                 [nxt-para-start (send txt paragraph-start-position nxt-para-num)]
+                                 [nxt-para-end (send txt paragraph-end-position nxt-para-num)]
+                                 [nxt-para-classify (txt-position-classify txt nxt-para-start nxt-para-end)])
+                          (when (equal? 'string (first nxt-para-classify))
+                            (send txt delete nxt-para-start 'back)
+                            (send txt insert #\space (sub1 nxt-para-start)))))
+                   
+                   #t))
+              ;;now determine if the next paragraph will be "push up"
+              ((< para-len width)#t);;only conside string
+              (else #t))
+        #t)))
+
 ;;for play
 (define (reindent-and-save in outs)
   (define t (new racket:text%))
@@ -141,7 +195,7 @@ will be passed to the next line, or some "words" from the next line will be pass
     (define posi (send t paragraph-start-position i))
     (define amount (determine-spaces t posi))
     (begin (adjust-spaces t i amount posi)
-           (adjust-para-width t posi 50)
+           ;(adjust-para-width t posi 50)
            )))
 
 (define (adjust-spaces t para amount posi)
@@ -153,15 +207,29 @@ will be passed to the next line, or some "words" from the next line will be pass
       (send t insert (make-string amount #\ ) posi))) 
   #t);;delete and insert
 
-;(reindent-and-save (collection-file-path "interface-essentials.scrbl" "scribblings" "drracket") "x_auto.scrbl")
+(reindent-and-save (collection-file-path "interface-essentials.scrbl" "scribblings" "drracket") "x_new.scrbl")
 ;;test cases
 (module+ test
   (require rackunit)
   (define txt_1 (new racket:text%))
-  (send txt_1 insert "#lang scribble/base\n@f{x}\nghjhgjhgjhg")
+  (send txt_1 insert "#lang scribble/base\n@f{x}\n@;ghj\ntyty\n\n")
   
-  ;test txt-position-classify
-  (check-equal? (txt-position-classify txt_1 0 28) #t)
+  ;test para-not-empty?
+  (check-equal? (let ([result (txt-position-classify txt_1 0 5)])
+                  (para-not-empty? result))
+                #f);;consider 'other as empty line
+  
+  (check-equal? (let ([result (txt-position-classify txt_1 20 24)])
+                  (para-not-empty? result))
+                #t)
+  
+  (check-equal? (let ([result (txt-position-classify txt_1 27 31)])
+                  (para-not-empty? result))
+                #f);comment
+  
+  (check-equal? (let ([result (txt-position-classify txt_1 37 38)])
+                  (para-not-empty? result))
+                #f);empty line
   ;test is-at-sign
   (check-equal? (let ([t (new racket:text%)])
                   (send t insert "(x)")
@@ -251,33 +319,22 @@ will be passed to the next line, or some "words" from the next line will be pass
                   (send t insert "  {abcde\nfgh\n}")
                   (delete-start-spaces t 0)
                   (send t get-text)) "{abcde\nfgh\n}")
+  ;;test case for adjust paragraph width 
+  (check-equal? (let ([t (new racket:text%)])
+                  (send t insert "#lang scribble/base\naaa bbb ccc ddd @e[f @g{h}]")
+                  (adjust-para-width t 22 9) 
+                  (send t get-text))
+                "#lang scribble/base\naaa bbb ccc\nddd @e[f @g{h}]")
   
   (check-equal? (let ([t (new racket:text%)])
-                  (send t insert "abc@d{e eee\nff}\n")
-                  (adjust-para-width t 9 7) 
+                  (send t insert "#lang scribble/base\na b c d @e[f @g{h}]")
+                  (adjust-para-width t 21 9) 
                   (send t get-text))
-                "abc@d{e\neee ff}\n")
+                "#lang scribble/base\na b c d\n @e[f @g{h}]");;keep the space, does not matter
   
   (check-equal? (let ([t (new racket:text%)])
-                  (send t insert "  aaa\n     bbb ccc ddd     \n eee\n")
-                  (adjust-para-width t 3 9) 
+                  (send t insert "#lang scribble/base\na b c d @e{}\n f g\n")
+                  (adjust-para-width t 21 9) 
                   (send t get-text))
-                "  aaa bbb\n ccc ddd\n eee\n")
-  
-  (check-equal? (let ([t (new racket:text%)])
-                  (send t insert "abc@d{e eee\nff fffffffff}\n")
-                  (adjust-para-width t 8 14) 
-                  (send t get-text))
-                "abc@d{e eee ff\n fffffffff}\n");;keep the space, does not matter
-  
-  (check-equal? (let ([t (new racket:text%)])
-                  (send t insert "@a[bb bb\n@cccc{dd dd\n\nee ee}\nff ff]")
-                  (adjust-para-width t 31 12) ;"f"
-                  (send t get-text))
-                "@a[bb bb\n@cccc{dd dd\n\nee ee}\nff ff]")
-  
-  (check-equal? (let ([t (new racket:text%)])
-                  (send t insert "aaa bbb ccc\n @ddd{}")
-                  (adjust-para-width t 6 8) ;"b"
-                  (send t get-text))
-                "aaa bbb\nccc\n @ddd{}"))
+                "#lang scribble/base\na b c d\n @e{} f g\n")
+  )
