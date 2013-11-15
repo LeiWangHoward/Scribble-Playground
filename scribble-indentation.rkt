@@ -7,7 +7,7 @@
          [para-start (send txt paragraph-start-position current-para)]
          [para-start-skip-space (send txt skip-whitespace para-start 'forward #t)];skip comment also
          [para-check (send txt position-paragraph para-start-skip-space)])
-    (if (= para-check current-para);not an empty paragraph
+    (if (= para-check current-para);not an empty paragraph/comment string
         (let ([sexp-start-posi (send txt backward-containing-sexp para-start-skip-space 0)])
           (if sexp-start-posi
               (let* ((prev-posi (sub1 sexp-start-posi))
@@ -34,20 +34,21 @@
          [para-classify (txt-position-classify txt para-start para-end)])
     (if (para-not-empty? para-classify) ;continue when current paragraph is not empty
         (cond ((> para-len width) ;paragraph too long
-               (select-cut-option txt para-start para-len width para-classify)
-               (if (is-non-empty-paragraph? txt (+ para-num 2)) ;; next paragraph not empty
-                   (begin (delete-end-spaces txt (+ para-num 1))
-                          (delete-start-spaces txt (+ para-num 2))
-                          (let* ([nxt-para-num (+ para-num 2)]
-                                 [nxt-para-start (send txt paragraph-start-position nxt-para-num)]
-                                 [nxt-para-end (send txt paragraph-end-position nxt-para-num)]
-                                 [nxt-para-classify (txt-position-classify txt nxt-para-start nxt-para-end)])
-                          (when (equal? 'text (first nxt-para-classify));now text
-                            (send txt delete nxt-para-start 'back)
-                            (send txt insert #\space (sub1 nxt-para-start)))))     
-                   #t))
+               (define line-next (select-cut-option txt para-start para-len width para-classify))
+               (when (equal? line-next #t)
+                 (if (is-non-empty-paragraph? txt (+ para-num 2)) ;; next paragraph not empty
+                     (begin (delete-end-spaces txt (+ para-num 1))
+                            (delete-start-spaces txt (+ para-num 2))
+                            (let* ([nxt-para-num (+ para-num 2)]
+                                   [nxt-para-start (send txt paragraph-start-position nxt-para-num)]
+                                   [nxt-para-end (send txt paragraph-end-position nxt-para-num)]
+                                   [nxt-para-classify (txt-position-classify txt nxt-para-start nxt-para-end)])
+                              (when (equal? 'text (first nxt-para-classify));now text
+                                (send txt delete nxt-para-start 'back)
+                                (send txt insert #\space (sub1 nxt-para-start)))))     
+                     #t)))
               ;;now determine if the next paragraph will be "push up"
-              ((< para-len width)#t);;only conside string
+              ((< para-len width) #t);;only conside string
               (else #t))
         #t)))
 
@@ -125,26 +126,54 @@
                 (else #f)))
         #f)));;#f needs to be replaced by racket indentation function
 
-;;select-cut-option : text start[natural] end[natural] -> cut the line by selecting 
+;;select-cut-option : text start[natural] end[natural] -> new line generalized [1/0]
 ;;1) breake whole @... to next line, 
 ;;2) keep @.... in current line 
 ;;3) if it is a simple text, just cut it
 (define (select-cut-option txt start len width classify-lst)
   (let ([adjust-result (list-ref classify-lst (sub1 width))]);;get the "end" position adjust result
-    (cond ((equal? adjust-result 'text) 
-           (for/first ([new-break (in-range (+ start width) (+ start len))] ;;todo: make it search back also
-                       #:when (equal? #\space (send txt get-character new-break)))
-             (send txt delete (add1 new-break) 'back)
-             (send txt insert #\newline new-break)));;replace the #\space with #\newline
-          ;;'symbol 'parenthesis 'string or 'space
+    (cond [(equal? adjust-result 'text) 
+           (let ([new-break (insert-break txt start (+ start width) (+ start len))])
+             (if new-break
+                 ;replace the #\space with #\newline 
+                 (begin (send txt delete (add1 new-break) 'back)
+                        (send txt insert #\newline new-break)
+                        #t)
+                 #f))]
+          
+          ((equal? adjust-result 'string) 
+           #t)
+          ;;'symbol 'parenthesis or 'space
           (else (let ([text-posi 
                        (for/last ([posi (in-range width)] 
-                                  #:when (equal? 'text (list-ref classify-lst posi)))
+                                  #:when (or (equal? 'text (list-ref classify-lst posi))
+                                             (equal? 'string (list-ref classify-lst posi))))
                          posi)])
                   (if text-posi
                       (when (< (- width text-posi) (- len width))
-                        (send txt insert #\newline (+ start text-posi)))
-                      #t))))))
+                        (send txt insert #\newline (+ start text-posi))
+                        #t)
+                      #f))))))
+
+;;insert-break : text start[natural] width-end[natural] end[natural] -> position[natural]/#f
+(define (insert-break t start width-end end)
+  (let ([right-break (for/first ([break-rs (in-range width-end end)] ;;todo: make it search back also
+                                 #:when (equal? #\space (send t get-character break-rs)))
+                       break-rs)]
+        [left-break (for/first ([break-ls (in-range width-end start -1)]
+                                #:when (equal? #\space (send t get-character break-ls)))
+                      break-ls)])
+    (cond [(and right-break left-break)
+           (if (> (- width-end left-break) (- right-break width-end))
+               right-break
+               left-break)]
+          [left-break
+           (if (< (- width-end left-break) (- end width-end))
+               left-break
+               #f)]
+          [right-break
+           right-break]
+          [t #f])))
 
 ;;!!!!!!!!!!wrap up function!!!!!!!write docs!!!!!!!![use scribble]
 
@@ -262,7 +291,7 @@
   ;;test case for adjust paragraph width 
   (check-equal? (let ([t (new racket:text%)])
                   (send t insert "#lang scribble/base\naaa bbb ccc ddd @e[f @g{h}]")
-                  (adjust-para-width t 22 9) 
+                  (adjust-para-width t 22 12) 
                   (send t get-text))
                 "#lang scribble/base\naaa bbb ccc\nddd @e[f @g{h}]")
   
@@ -278,6 +307,21 @@
                   (send t get-text))
                 "#lang scribble/base\na b c d\n @e{} f g\n")
   
+  ;;test insert-break
+  (check-equal? (let ((t (new racket:text%)))
+                  (send t insert "aaa bbb ccc ddd")
+                  (let ([new-break (insert-break t 0 6 14)])
+                    (send t delete (add1 new-break) 'back)
+                    (send t insert #\newline new-break)
+                    (send t get-text))) "aaa bbb\nccc ddd")
+  
+  ;;for the situation there isn't any #\space on right side 
+  (check-equal? (let ((t (new racket:text%)))
+                  (send t insert "aaaa bbbb")
+                  (let ([new-break (insert-break t 0 5 8)])
+                    (send t delete (add1 new-break) 'back)
+                    (send t insert #\newline new-break)
+                    (send t get-text))) "aaaa\nbbbb") 
   ;;if @ at the very beginning of the line, it follows the more powerful rule, don't touch it.
   ;; if it is indented, do something following rules
   
@@ -287,3 +331,5 @@
   
   ;; @onscreen{Find Again} menu item. In the preference
   )
+
+(provide determine-spaces adjust-para-width)
