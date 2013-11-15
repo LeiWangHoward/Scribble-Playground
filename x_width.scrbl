@@ -9,8 +9,8 @@
 @(define (iooutputfont . s)
    (make-element output-color (decode-content s)))
 
-@title[#:tag "interface-essentials
-       " #:style 'toc]{Interface Essentials}
+@title[#:tag "interface-essentials" #:style 'toc]{
+ Interface Essentials}
 
 The DrRacket window has three parts: a row of buttons
 at the top, two editing panels in the middle, and
@@ -20,7 +20,8 @@ a status line at the bottom.
 
 The top editing panel, called the @deftech{definitions
  window}, is for defining programs. The above figure
-shows a program that defines the function @racket[square].
+shows a program that defines the function @racket[square]
+.
 
 The bottom panel, called the @deftech{interactions
  window}, is for evaluating Racket expressions
@@ -40,15 +41,16 @@ program in the definitions window, making the
 program's definitions available in the interactions
 window. Given the definition of @racket[square] as
 in the figure above, typing @racket[(square 2)] in
-the interactions window produces the result @racket[4].
+the interactions window produces the result @racket[4]
+.
 
 The @deftech{status line} at the bottom of DrRacket's
 window provides information about the current line
 and position of the editing caret, whether the
 current file can be modified, and whether DrRacket
-is currently evaluating any expression. The
- @as-index{recycling icon} flashes while DrRacket
-is ``recycling'' internal resources, such as memory.
+is currently evaluating any expression. The @as-index{
+ recycling icon} flashes while DrRacket is ``recycling''
+internal resources, such as memory.
 
 @local-table-of-contents[]
 
@@ -57,17 +59,18 @@ is ``recycling'' internal resources, such as memory.
 @section[#:tag "buttons"]{Buttons}
 
 The left end of the row of buttons in DrRacket
-contains a miniature button with the @index['("filename button")]{current file's
- name}. Clicking the button opens a menu that shows
-the file's full pathname. Selecting one of the menu
+contains a miniature button with the 
+@index['("filename button")]{current file's name}.
+Clicking the button opens a menu that shows the
+file's full pathname. Selecting one of the menu
 entries produces an open-file dialog starting in
 the corresponding directory.
 
-Below the filename button is a @as-index{@onscreen{(define ...)}
- button} for a pop-up menu of names that are defined
-in the definitions window. Selecting an item from
-the menu moves the blinking caret to the corresponding
-definition.
+Below the filename button is a @as-index{@onscreen{
+  (define ...)} button} for a pop-up menu of names
+that are defined in the definitions window. Selecting
+an item from the menu moves the blinking caret to
+the corresponding definition.
 
 The @as-index{@onscreen{Save} button} appears whenever
 the definitions window is modified. Clicking the
@@ -87,7 +90,8 @@ the
 a program as a series of small steps. Each evaluation
 step replaces an expression in the program with an
 equivalent one using the evaluation rules of DrRacket.
-For example, a step might replace @racket[(+ 1 2)] with
+For example, a step might replace @racket[(+ 1 2)]
+ with
 @racket[3]. These are the same rules used by DrRacket
 to evaluate a program.  Clicking @onscreen{Step}
 opens a new window that contains the program from
@@ -101,8 +105,8 @@ a series of steps.
 
 The @as-index{@onscreen{Debug} button}---which does
 @emph{not} appear for the @|HtDP| teaching
-languages---starts a more conventional stepping
- @as-index{debugger}.  It runs the program in the
+languages---starts a more conventional stepping 
+@as-index{debugger}.  It runs the program in the
 definitions window like the @onscreen{Run} button,
 but also opens a debugging panel with several other
 buttons that provide control over the program's
@@ -127,7 +131,8 @@ window.  It add the following annotations:
   to the variable, or from the binding location to
   every bound occurrence of the variable.
 
-  @index['("Check syntax" "purple arrows")]{@index['("Check
+  @index['("Check syntax" "purple arrows")]{
+   @index['("Check
        syntax" "question-mark arrows")]{In}} addition
   to indicating definite references with blue arrows,
   DrRacket also draws arrows to indicate potential
@@ -147,26 +152,25 @@ window.  It add the following annotations:
   variable, or tack the arrows so they do not
   disappear.}
 
- @item{@index['("tail calls")]{@bold{Tail Calls
-    :}} Any sub-expression that is (syntactically)
-  in tail-position with respect to its enclosing
-  context is annotated by drawing a light purple
-  arrow from the tail expression to its surrounding
-  expression.}
+ @item{@index['("tail calls")]{@bold{Tail Calls:}}
+  Any sub-expression that is (syntactically) in
+  tail-position with respect to its enclosing context
+  is annotated by drawing a light purple arrow from
+  the tail expression to its surrounding expression.}
 
  @item{@bold{Require Annotations:} Right-clicking
   (or Control-clicking on Mac OS X) on the argument
   to
   @racket[require] activates a pop-up menu that lets
-  you open the file that contains the
-  @racket[require]d module.
+  you open the file that contains the @racket[require]
+  d module.
 
-  Passing the mouse cursor over a @racket[require] expression
-  inside a module shows all of the variables that
-  are used from that @racket[require] expression.
-  Additionally, if no variables are used from that
-  require expression, it is colored like an unbound
-  variable.
+  Passing the mouse cursor over a @racket[require]
+  expression inside a module shows all of the
+  variables that are used from that @racket[require]
+  expression. Additionally, if no variables are used
+  from that require expression, it is colored like
+  an unbound variable.
 
   Finally, passing the mouse cursor over a variable
   that is imported from a module shows the module
@@ -220,19 +224,20 @@ language in one of two ways:
 @itemize[
 
  @item{Select the @drlang{Use the language declared
-   in the source} option (via the @menuitem["Language" "Choose Language..."] menu
+   in the source} option (via the 
+  @menuitem["Language" "Choose Language..."] menu
   item), and then specify a specific language as
   part of the program usually by starting the
   definitions-window content with
   @hash-lang[].}
 
- @item{Select the @menuitem["Language" "Choose Language..."] menu
-  item, and choose a specific language. After changing
-  the language, click @onscreen{Run} to reset the
-  language in the interactions window. The bottom-left
-  corner of DrRacket's main window also has a shortcut
-  menu item for selecting previously selected
-  languages.}
+ @item{Select the @menuitem["Language" "Choose Language..."]
+  menu item, and choose a specific language. After
+  changing the language, click @onscreen{Run} to
+  reset the language in the interactions window.
+  The bottom-left corner of DrRacket's main window
+  also has a shortcut menu item for selecting
+  previously selected languages.}
  
  ]
 
@@ -257,8 +262,8 @@ supports.
 
 @section[#:tag "editor"]{Editing with Parentheses}
 
-@index['("flashing parenthesis matches
- ")]{@index['("gray highlight
+@index['("flashing parenthesis matches")]{
+ @index['("gray highlight
 regions")]{In}} Racket mode, especially, DrRacket's
 editor provides special support for managing
 parentheses in a program. When the blinking caret
@@ -278,8 +283,8 @@ key. (The caret can be anywhere in the line.) You
 can re-indent an entire region by selecting the
 region and typing Tab.
 
-@index['("changing a parenthesis as you type
- ")]{@index['("automatic
+@index['("changing a parenthesis as you type")]{
+ @index['("automatic
 parenthesis")]{DrRacket}} also rewrites parenthesis
 as you type them, in order to make them match better.
 If you type a closing parenthesis
@@ -295,18 +300,18 @@ changed to parentheses:
 
 @itemize[
 
- @item{If the square bracket is after
-  @racket[cond]-like keyword, potentially skipping
-  some of the sub-expressions in the
+ @item{If the square bracket is after @racket[cond]
+  -like keyword, potentially skipping some of the
+  sub-expressions in the
   @racket[cond]-like expression (for example, in a
   @racket[case] expression, the square brackets
   start in the second sub-expression).}
 
  @item{If the square bracket begins a new expression
   immediately after a @racket[local]-like keyword.
-  Note that the second expression after a
-  @racket[local]-like keyword will automatically
-  become an ordinary parenthesis.}
+  Note that the second expression after a @racket[local]
+  -like keyword will automatically become an ordinary
+  parenthesis.}
 
  @item{If the square bracket is after a parenthesis
   that is after a
@@ -339,8 +344,8 @@ DrRacket will change the square brackets to match
 the code above.
 
 Of course, these features can be disabled and
-customized in the preferences dialog; see
- @secref["prefs-explanation"].  Also, in case DrRacket
+customized in the preferences dialog; see 
+@secref["prefs-explanation"].  Also, in case DrRacket
 does not produce the character you want, holding
 down the control key while typing disables DrRacket's
 parenthesis, brace, and bracket converter.
@@ -375,9 +380,9 @@ string.
 
 DrRacket also supports a mode where typing in the
 search editor takes you directly to the next occurrence
-of the search string, without selecting the
- @onscreen{Find Again} menu item. In the preference
-dialog, in the
+of the search string, without selecting the @onscreen{
+ Find Again} menu item. In the preference dialog,
+in the
 @onscreen{Editing} section and then in the
 @onscreen{General} section is a checkbox labeled
 @onscreen{Search using anchors}. When it is checked,
@@ -392,16 +397,15 @@ search string after the anchor.
 @section{Tabbed Editing}
 
 DrRacket's allows you to edit multiple files in a
-single window via tabs. The @menuitem["File" "New Tab"] menu item creates a new tab to
-show a new file. Each tab has its own interactions
-window.
+single window via tabs. The @menuitem["File" "New Tab"]
+ menu item creates a new tab to show a new file.
+Each tab has its own interactions window.
 
 In the @onscreen{General} pane of the
-the preferences window, a checkbox labeled
- @onscreen{Open files in separate tabs} causes
-DrRacket to open files in new tabs in the frontmost
-window, rather than opening a new window for the
-file.
+the preferences window, a checkbox labeled @onscreen{
+ Open files in separate tabs} causes DrRacket to
+open files in new tabs in the frontmost window,
+rather than opening a new window for the file.
 
 The key bindings Control-Pageup and Control-Pagedown
 move between tabs. On Mac OS X, Command-Left-Square-Bracket
@@ -413,8 +417,8 @@ tabs.
 @section[#:tag "interactions-window"]{The Interactions
  Window}
 
-@index['("> prompt")]{@index['("evaluating expressions")]{The}}
-interactions window lets you type an expression
+@index['("> prompt")]{@index['("evaluating expressions")]{
+  The}} interactions window lets you type an expression
 after the @tt{>} prompt for immediate evaluation.
 You cannot modify any text before the last @tt{>}
 prompt. To enter an expression, the blinking caret
@@ -438,9 +442,9 @@ Command-Return (depending on your platform).
 
 To copy the @as-index{previous expression} to the
 current prompt, type ESC-p (i.e., type Escape and
-then type p). Type ESC-p multiple times to
- @as-index{cycle back through old expressions}. Type
-ESC-n to cycle forward through old expressions.
+then type p). Type ESC-p multiple times to @as-index{
+ cycle back through old expressions}. Type ESC-n to
+cycle forward through old expressions.
 
 Clicking the @onscreen{Run} button evaluates the
 program in the
@@ -492,9 +496,10 @@ calls in the @tech{interactions window}, and producing
 output by returning values. Other Racket programs
 explicitly print output for the user during evaluation
 using
-@as-index{@racket[write]} or @as-index{@racket[display]}, or
-explicitly request input from the user using
- @as-index{@racket[read]} or @as-index{@racket[read-char]}.
+@as-index{@racket[write]} or @as-index{@racket[display]}
+, or explicitly request input from the user using
+@as-index{@racket[read]} or @as-index{@racket[read-char]}
+.
 
 Explicit input and output appear in the @tech{interactions
  window}, but within special boxes that separate
@@ -528,11 +533,11 @@ the result appears as follows:
 
 In this case, the first @ioinputfont{5} is the input,
 and the second
-@racketresult[5] is the result of the
- @racket[(read)] expression. The second
- @racketresult[5] is colored blue, as usual for a
-result printed by DrRacket. (The underscore indicates
-the location of the blinking caret.)
+@racketresult[5] is the result of the @racket[(read)]
+ expression. The second @racketresult[5] is colored
+blue, as usual for a result printed by DrRacket.
+(The underscore indicates the location of the blinking
+caret.)
 
 Output goes into the @tech{interactions window}
 directly. If you run the program
@@ -559,8 +564,8 @@ immediately beneath the input you typed, and the
 final result is printed last. The displayed output
 is drawn in purple. (The above example assumes
 default printing. With constructor-style value
-printing, the final before the prompt would be
- @racket[(list 1 2)].)
+printing, the final before the prompt would be 
+@racket[(list 1 2)].)
 
 Entering the same program line-by-line in the
 interactions window produces a different-looking
@@ -611,8 +616,8 @@ The @onscreen{eof} button that appears beside an
 input box inserts a single @racket[eof-object] into
 the input stream, but more IO may follow in a later
 sequence. For example, in the following interaction,
-the user typed @litchar{1} and then clicked the
- @onscreen{eof} button:
+the user typed @litchar{1} and then clicked the 
+@onscreen{eof} button:
 
 @racketblock[
  @#,tt{>} (read-char)
@@ -626,16 +631,16 @@ still take place: new calls to input functions with
 open a new input box and new characters will come
 from the same port.
 
-Within a @racket[@#,hash-lang[] @#,racketmodname[racket]] module,
-the results of top-level expression print the same
-as the results of an expression entered in the
- @tech{interactions window}. The reason is that
- @racket[@#,hash-lang[] @#,racketmodname[racket]]
+Within a @racket[@#,hash-lang[] @#,racketmodname[racket]]
+ module, the results of top-level expression print
+the same as the results of an expression entered in
+the @tech{interactions window}. The reason is that
+@racket[@#,hash-lang[] @#,racketmodname[racket]]
 explicitly prints the results of top-level expressions
 using
-@racket[(current-print)], and DrRacket sets
- @racket[(current-print)] to print values in the
-same way as for interactions.
+@racket[(current-print)], and DrRacket sets 
+@racket[(current-print)] to print values in the same
+way as for interactions.
 
 @; ----------------------------------------------------------------------
 
@@ -657,8 +662,8 @@ the image is inserted at the current editing caret.
 As an expression an image behaves like a number or
 string constant: it evaluates to itself. DrRacket's
 @tech{interactions window} knows how to draw
-image-value results or images displayed via
- @racket[print].
+image-value results or images displayed via 
+@racket[print].
 
 A program can manipulate image values in various
 ways, such as using the @racket[htdp/image] library
@@ -713,14 +718,14 @@ box between a Racket box and a Racket splice box.
  in the middle of a debugging session will prevent
  the debugger from working properly on that file.}
 
-Like the @onscreen{Run} button, the
- @as-index{@onscreen{Debug} button} runs the program
-in the definitions window.  However, instead of
-simply running it from start to finish, it lets
-users control and observe the program as it executes.
- The interface includes a panel of buttons above
-the definitions window, as well as extensions to
-the definitions window itself.
+Like the @onscreen{Run} button, the @as-index{
+ @onscreen{Debug} button} runs the program in the
+definitions window.  However, instead of simply
+running it from start to finish, it lets users
+control and observe the program as it executes. 
+The interface includes a panel of buttons above the
+definitions window, as well as extensions to the
+definitions window itself.
 
 The program starts out paused just before the first
 expression is executed.  This is indicated in the
@@ -756,11 +761,11 @@ available:
 
  @item{The @as-index{@onscreen{Out} button} is only
   enabled when execution is paused within the context
-  of another expression.  Like the @onscreen{Ove
-   r} button, it sets a one-time breakpoint and
-  continues execution.  In this case, the program
-  stops upon returning to the context or raising an
-  unhandled exception.}
+  of another expression.  Like the @onscreen{Over}
+  button, it sets a one-time breakpoint and continues
+  execution.  In this case, the program stops upon
+  returning to the context or raising an unhandled
+  exception.}
  
  ]
 
@@ -861,12 +866,11 @@ in the selected stack frame.
 The following screenshot illustrates several aspects
 of the debugger interface.  The red circle before
 the @racket[if] is a breakpoint, and the green
-triangle at the end of the
- @racket[(fact (sub1 n))] is where execution is
-currently paused.  The expression's return value is
-displayed at the left of the button bar, and the
-value of @racket[n] is displayed in the stack view
-pane.
+triangle at the end of the @racket[(fact (sub1 n))]
+ is where execution is currently paused.  The
+expression's return value is displayed at the left
+of the button bar, and the value of @racket[n] is
+displayed in the stack view pane.
 
 @centerline{@image[#:scale 0.5 "debugger1.png"]}
 
@@ -907,10 +911,10 @@ lines of code, it gets a darker color. If a module
 is red, it means that DrRacket did not find a source
 file for it.
   
-  In addition, for each normal import, a blue line
-drawn is from the module to the importing module.
-Similarly, purple lines are drawn for each for-syntax,
-for-template or for-meta import. In the initial module layout, modules to the left import modules to the
+  In addition, for each normal import, a blue line drawn is
+  from the module to the importing module. Similarly, purple
+  lines are drawn for each for-syntax, for-template or for-meta import. In the initial
+  module layout, modules to the left import modules to the
   right, but since modules can be moved around
   interactively, that property might not be preserved.
 

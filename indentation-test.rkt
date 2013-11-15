@@ -1,6 +1,8 @@
 #lang racket
 (require "scribble-indentation.rkt")
 (require framework)
+
+(provide determine-spaces)
 ;;for play
 (define (reindent-and-save in outs)
   (define t (new racket:text%))
@@ -30,4 +32,4 @@
       (send t insert (make-string amount #\ ) posi))) 
   #t);;delete and insert
 
-;(reindent-and-save (collection-file-path "interface-essentials.scrbl" "scribblings" "drracket") "x_new.scrbl")
+(reindent-and-save (collection-file-path "interface-essentials.scrbl" "scribblings" "drracket") "x_width.scrbl")
