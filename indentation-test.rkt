@@ -16,7 +16,7 @@
 
 (define (indent-all t)
   (for ([i ;(in-range (send t last-paragraph) -1 -1)]);counting down from the last paragraph
-         (in-range 0 (send t last-paragraph) 1)]);counting up from first paragraph
+         (in-range 20 (send t last-paragraph) 1)]);counting up from first paragraph
     (define posi (send t paragraph-start-position i))
     (define amount (determine-spaces t posi))
     (begin (adjust-spaces t i amount posi)
