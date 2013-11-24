@@ -7,14 +7,11 @@
          [para-start-line (for/first ([line (in-range current-line 0 -1)]
                                       #:when (equal? #\newline (send txt get-character 
                                                                      (send txt paragraph-start-position line))))
-                            line)]
-         
-         [para-end-line (for/first ([line (in-range current-line (+ current-line 100))]
-                                    #:when (equal? #\newline (send txt get-character 
-                                                                   (send txt paragraph-start-position line))))
-                          line)])
+                            line)])
     (if para-start-line
-        (for ([i (in-range (+ para-start-line 1) (- para-end-line 1) 1)])
+        (for ([i (in-range (+ para-start-line 1) (+ para-start-line 1000) 1)]
+              #:break  (equal? #\newline (send txt get-character 
+                                               (send txt paragraph-start-position i))))
           (define posi (send txt paragraph-start-position i))
           (define amount (determine-spaces txt posi))
           (begin (adjust-spaces txt i amount posi)
@@ -126,8 +123,6 @@
     ((not p) count)
     (begin
       (set! p (sub1 p))
-      ;(displayln (send txt get-character p))
-      ;(displayln p)
       (when (or (equal? #\{ (send txt get-character p))
                 (equal? #\[ (send txt get-character p)))
         (set! count (add1 count))))))
