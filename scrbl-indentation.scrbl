@@ -1,29 +1,57 @@
-#lang scribble/base
+#lang scribble/doc
+@(require scribble/manual
+          scribble/bnf
+          (for-label scriblib/figure))
 
-@title{Indentation rules}
+@(define (sample . text) (nested #:style 'inset (apply verbatim text)))
+@(define (result . text) (apply nested #:style 'inset text))
 
-1) Tab adjusted
+@title[#:tag "interface-essentials" #:style 'toc]{1. Scribble Indentation}
 
-@itemlist[@item{item1}
-          @item{item2}]
+This document has two sections: scribble indentation rules
+and scribble indentation functions.
 
-2) One-space adjusted
+@section{1.1 Scribble Indentation Rules}
 
-@centered{
- @bold{Cookies Wanted}
- @italic{Chocolate chip
-  preferred!iuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu}
- }
+The scribble indentation rules are created based on the
+judgement of @italic{parent parenthesis}. It will perform
+the indentation on each line of code based on two facts:
+check @italic{parent parenthesis} and counting number of
+parenthesis till the outmost @elem["@"] notation that the
+current line is in.
 
-@;@a[ 
-@; test
-@; @b{c}
-@; @d{e}
-@;]
+@section{1.1.1 Parenthesis judgement rules} 
 
+@itemize[
+         
+ @item{Tab adjusted:
+  @sample|{
+   @itemlist[@item{item1}
+   	     @item{item2}}|
+  }
+               
+ @item{One-space adjusted:
+  @sample|{
+   @centered{
+   @bold{blah}
+   @italic{blah}
+   }}|
+                                   
+  @sample|{
+   @itemlist[ 
+   @item{blah}
+   @item{blah}]
+   }|
+  }
+
+        ]
+                                   
 Line breaking rules:
+                                   
+1)Only handle string
+inside {} or pure string
 
-1)Only handle string inside {} or pure string
-
-2)Each paragraph shall not have more/less than given character number(e.g. 70). The last few "words"
-will be passed to the next line, or some "words" from the next line will be pass back to current line
+2)Each paragraph shall not have more/less than given
+character number(e.g. 70). The last few "words" will be
+passed to the next line, or some "words" from the next line
+will be pass back to current line

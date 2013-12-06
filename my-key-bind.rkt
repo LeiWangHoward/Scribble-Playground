@@ -14,9 +14,9 @@
     (paragraph-indentation t sp 60)))
 (send k add-function "reindent-paragraph" reindent-paragraph)
 (send k map-function "esc;q" "reindent-paragraph")
-(send k map-function "c:q" "reindent-paragraph")
+(send k map-function "c:q" "reindent-paragraph");;control+q
 (send k add-function "save" (λ (t evt) (send t save-file)))
-(send k map-function "d:s" "save")
+(send k map-function "d:s" "save");;command+s
 (send t set-keymap k)
 (send f show #t)
 (send t load-file scrbl-indentation.scrbl)
