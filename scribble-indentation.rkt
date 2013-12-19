@@ -5,18 +5,28 @@
 (define (paragraph-indentation txt posi width)
   (let* ([current-line (send txt position-paragraph posi)]
          [para-start-line (for/first ([line (in-range current-line 0 -1)]
-                                      #:when (equal? #\newline (send txt get-character 
-                                                                     (send txt paragraph-start-position line))))
+                                      #:when (empty-line? txt line))
                             line)])
     (if para-start-line
         (for ([i (in-range (+ para-start-line 1) (+ para-start-line 1000) 1)]
-              #:break  (equal? #\newline (send txt get-character 
-                                               (send txt paragraph-start-position i))))
+              #:break  (empty-line? txt i))
           (define posi (send txt paragraph-start-position i))
           (define amount (determine-spaces txt posi))
           (begin (adjust-spaces txt i amount posi)
                  (adjust-para-width txt posi width)))
         #f)))
+
+(define (empty-line? txt line)
+  (let* ([line-start (send txt paragraph-start-position line)]
+         [line-end (send txt paragraph-end-position line)]
+         [line-classify (txt-position-classify txt line-start line-end)])
+    (not (para-not-empty? line-classify))))
+#|
+  [line-skip-space (for/first ([char (in-range line-start line-end 1)]
+                                      #:when (not (equal? (send txt get-character char) #\space)))
+                            char)])
+  (equal? #\newline (send txt get-character line-skip-space))))   
+        |#
 
 ;;determine-spaces : text position[natural] -> spaces in front of current paragraph (end in "\n")
 (define (determine-spaces txt posi)
@@ -53,18 +63,22 @@
         (cond ((> para-len width) ;paragraph too long
                (define new-line-created (select-cut-option txt para-start para-len width para-classify))
                (when (equal? new-line-created #t)
-                 (if (is-non-empty-paragraph? txt (+ para-num 2)) ;; next paragraph not empty
-                     (begin (delete-end-spaces txt (+ para-num 1))
-                            (delete-start-spaces txt (+ para-num 2))
-                            (let* ([nxt-para-num (+ para-num 2)]
-                                   [nxt-para-start (send txt paragraph-start-position nxt-para-num)]
-                                   [nxt-para-end (send txt paragraph-end-position nxt-para-num)]
-                                   [nxt-para-classify (txt-position-classify txt nxt-para-start nxt-para-end)])
-                              (when (equal? 'text (first nxt-para-classify))
-                                ;now text
-                                (send txt delete nxt-para-start 'back)
-                                (send txt insert #\space (sub1 nxt-para-start)))))     
-                     #t)))
+                 (let* ([next-para-num (+ para-num 2)]
+                        [next-para-start (send txt paragraph-start-position next-para-num)]
+                        [next-para-end (send txt paragraph-end-position next-para-num)]
+                        [next-para-classify (txt-position-classify txt next-para-start next-para-end)])
+                   (if (para-not-empty? next-para-classify) ;; next paragraph not empty
+                       (begin (delete-end-spaces txt (+ para-num 1))
+                              (delete-start-spaces txt (+ para-num 2))
+                              (let* ([nxt-para-num (+ para-num 2)]
+                                     [nxt-para-start (send txt paragraph-start-position nxt-para-num)]
+                                     [nxt-para-end (send txt paragraph-end-position nxt-para-num)]
+                                     [nxt-para-classify (txt-position-classify txt nxt-para-start nxt-para-end)])
+                                (when (equal? 'text (first nxt-para-classify))
+                                  ;now text
+                                  (send txt delete nxt-para-start 'back)
+                                  (send txt insert #\space (sub1 nxt-para-start)))))     
+                       #t))))
               ;;now determine if the next paragraph will be "push up"
               ((< para-len width) #t);;only consider text
               (else #t))
@@ -83,16 +97,6 @@
          (and (equal? start posi)
               (equal? end (+ posi 1))))
        (equal? #\@ (send txt get-character posi))))
-
-;;is-non-empty-paragraph?: check if the given paragraph is a valid paragraph: text position[natural] -> #t/#f
-(define (is-non-empty-paragraph? txt para)
-  (let ([para-start (send txt paragraph-start-position para)]
-        [para-end (send txt paragraph-end-position para)])
-    (for/first ([new-break (in-range para-start para-end 1)]
-                #:unless (and (char-whitespace? (send txt get-character new-break))
-                              (not (member (send txt get-character new-break)
-                                           '(#\newline #\return)))))
-      #t)))
 
 ;;not-empty?: classify results[list] -> #t/#f
 (define (para-not-empty? classify-lst) ;;we consider 'other  and 'comment as empty
@@ -195,6 +199,7 @@
     (when (> amount 0)
       (send t insert (make-string amount #\space) posi))) 
   #t)
+
 ;;test cases
 (module+ test
   (require rackunit)
@@ -223,21 +228,7 @@
                   (is-at-sign? t 0))
                 #f)
   (check-equal? (is-at-sign? txt_1 20) #t)
-  (check-equal? (is-at-sign? txt_1 22) #f)
-  
-  ;test (is-non-empty-paragraph? txt para)
-  (check-equal? (let ([t (new racket:text%)])
-                  (send t insert "(\n\nx)")
-                  (is-non-empty-paragraph? t 1))
-                #f)
-  (check-equal? (let ([t (new racket:text%)])
-                  (send t insert "(\n\nx)")
-                  (is-non-empty-paragraph? t 0))
-                #t)
-  (check-equal? (let ([t (new racket:text%)])
-                  (send t insert "(\n  \nx)")
-                  (is-non-empty-paragraph? t 1))
-                #f)
+  (check-equal? (is-at-sign? txt_1 22) #f) 
   
   ;test determine-spaces
   (check-equal? (determine-spaces txt_1 15) #f)
@@ -270,9 +261,9 @@
   (check-equal? (determine-spaces txt_6 17) #f);empty line!
   (check-equal? (determine-spaces txt_6 18) 1)
   
-  (define txt_7 (new racket:text%))
-  (send txt_7 insert "@(define (foo . a)\n(bar b))")
-  (check-equal? (determine-spaces txt_7 19) #f)
+  (check-equal? (let ([txt_7 (new racket:text%)])
+                  (send txt_7 insert "@(define (foo . a)\n(bar b))")
+                  (determine-spaces txt_7 19)) #f)
   
   (define txt_8 (new racket:text%))
   (send txt_8 insert "@a{me}\n@b[\n@c{@d{e} f\ng\nh}\n")
@@ -292,6 +283,11 @@
   (send txt_10 insert "(d f\n(l [()\n(f ([a (b c)])\n(d e)))])")
   (check-equal? (indent-racket-func txt_10 12) #f)      
   
+  (define txt_11 (new racket:text%))
+  (send txt_11 insert "@a[\n     ]\n")
+  (check-equal? (indent-racket-func txt_11 4) 0)      
+  
+  
   ;;test cases for:delete-end-spaces delete-start-spaces
   (check-equal? (let ([t (new racket:text%)])
                   (send t insert "{abcde   \nfgh\n}")
@@ -306,6 +302,21 @@
                   (send t insert "  {abcde\nfgh\n}")
                   (delete-start-spaces t 0)
                   (send t get-text)) "{abcde\nfgh\n}")
+    
+  (check-equal? (let ([t (new racket:text%)])
+                  (send t insert "@a[\n      ]\n")
+                  (delete-start-spaces t 1)
+                  (send t get-text)) "@a[\n]\n")
+  
+  ;;adjust-spaces
+  (check-equal? (let ([t (new racket:text%)])
+                  (send t insert "@a[\n     ]\n")
+                  (adjust-spaces t 1 1 4)
+                  (adjust-spaces t 1 1 4)
+                  (send t get-text)) "@a[\n ]\n")
+  
+  ;;paragraph indentation
+  
   ;;test case for adjust paragraph width 
   (check-equal? (let ([t (new racket:text%)])
                   (send t insert "#lang scribble/base\naaa bbb ccc ddd @e[f @g{h}]")

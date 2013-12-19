@@ -27,15 +27,16 @@ current line is in.
  @item{Tab adjusted:
   @sample|{
    @itemlist[@item{item1}
-   	     @item{item2}}|
+   @item{item2}]}|
   }
                
  @item{One-space adjusted:
   @sample|{
    @centered{
-   @bold{blah}
-   @italic{blah}
-   }}|
+    @bold{blah}
+    @italic{blah}
+   }
+   }|
                                    
   @sample|{
    @itemlist[ 
@@ -44,7 +45,7 @@ current line is in.
    }|
   }
 
-        ]
+ ]
                                    
 Line breaking rules:
                                    
@@ -55,3 +56,10 @@ inside {} or pure string
 character number(e.g. 70). The last few "words" will be
 passed to the next line, or some "words" from the next line
 will be pass back to current line
+
+
+
+
+
+;;;;;;moving ]
+;;;;;;; 

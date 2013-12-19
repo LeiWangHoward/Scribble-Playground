@@ -23,8 +23,14 @@
 (require "scribble-indentation.rkt")
 (require rackunit)
 
-(txt-position-classify t5 0 33)
+;(txt-position-classify t5 0 33)
 
+(define t6 (new racket:text%))
+(send t6 insert 
+      "#lang scribble/base\n(require framework)\n@itemlist[ @item{item1}\n@item{item2}\n];")
+;;#lang scribble/base\n@f{\n @a{asdadsasd}\n@b\n}")
+
+(txt-position-classify t6 0 100)
 #|
 (txt-position-classify t 20 50)
 (let-values ([(c d) (send t get-token-range 40)]);start to end+1
