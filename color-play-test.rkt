@@ -27,10 +27,27 @@
 
 (define t6 (new racket:text%))
 (send t6 insert 
-      "#lang scribble/base\n(require framework)\n@itemlist[ @item{item1}\n@item{item2}\n];")
+      "#lang scribble/base\n@itemlist[ @item{item1}\n@item{item2}\n];")
 ;;#lang scribble/base\n@f{\n @a{asdadsasd}\n@b\n}")
 
-(txt-position-classify t6 0 100)
+(txt-position-classify t6 0 150)
+
+
+
+(define txt_11 (new racket:text%))
+  (send txt_11 insert "#lang scribble/base\n@a[\n    ]\n")
+
+ (let* ([current-para (send txt_11 position-paragraph 24)]
+         [para-start (send txt_11 paragraph-start-position current-para)]
+         [para-start-skip-space (send txt_11 skip-whitespace para-start 'forward #t)]
+         [sexp (send txt_11 backward-containing-sexp para-start-skip-space 0)])
+   (displayln current-para)
+   (displayln para-start)
+   (displayln para-start-skip-space)
+   (displayln sexp))
+
+(displayln (send txt_11 classify-position 27))
+
 #|
 (txt-position-classify t 20 50)
 (let-values ([(c d) (send t get-token-range 40)]);start to end+1

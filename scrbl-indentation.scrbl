@@ -27,7 +27,7 @@ current line is in.
  @item{Tab adjusted:
   @sample|{
    @itemlist[@item{item1}
-   @item{item2}]}|
+             @item{item2}]}|
   }
                
  @item{One-space adjusted:
@@ -40,13 +40,18 @@ current line is in.
                                    
   @sample|{
    @itemlist[ 
-   @item{blah}
-   @item{blah}]
+    @item{blah}
+    @item{blah}]
    }|
   }
 
  ]
-                                   
+
+@itemlist[ 
+    @item{blah}
+    @item{blah}
+]
+
 Line breaking rules:
                                    
 1)Only handle string

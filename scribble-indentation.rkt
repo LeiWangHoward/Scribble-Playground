@@ -21,24 +21,18 @@
          [line-end (send txt paragraph-end-position line)]
          [line-classify (txt-position-classify txt line-start line-end)])
     (not (para-not-empty? line-classify))))
-#|
-  [line-skip-space (for/first ([char (in-range line-start line-end 1)]
-                                      #:when (not (equal? (send txt get-character char) #\space)))
-                            char)])
-  (equal? #\newline (send txt get-character line-skip-space))))   
-        |#
 
 ;;determine-spaces : text position[natural] -> spaces in front of current paragraph (end in "\n")
 (define (determine-spaces txt posi)
   (let* ([current-para (send txt position-paragraph posi)]
          [para-start (send txt paragraph-start-position current-para)]
-         [para-start-skip-space (send txt skip-whitespace para-start 'forward #t)];skip comment also
-         [para-check (send txt position-paragraph para-start-skip-space)])
-    (if (= para-check current-para);not an empty paragraph/comment string
+         [para-start-skip-space (send txt skip-whitespace para-start 'forward #t)]);skip comment also
+    (if (not (empty-line? txt current-para));not an empty paragraph/comment string
         (let ([sexp-start-posi (send txt backward-containing-sexp para-start-skip-space 0)])
           (if sexp-start-posi
               (let* ((prev-posi (sub1 sexp-start-posi))
                      (this-para (send txt position-paragraph prev-posi)))
+                ;(displayln sexp-start-posi);;test
                 (cond ((equal? #\[ (send txt get-character prev-posi))
                        (let ((this-para-start (send txt paragraph-start-position this-para)))
                          (if (= current-para this-para)
@@ -46,7 +40,7 @@
                              (add1 (- prev-posi this-para-start)))))
                       ;;if it is inside a racket function and not the first line of the racket function
                       ((equal? #\( (send txt get-character prev-posi))
-                       (indent-racket-func txt prev-posi));call corresponding function
+                       (indent-racket-func txt prev-posi));call corresponding function to indent racket stuff
                       (else (count-parens txt sexp-start-posi))))  
               sexp-start-posi))
         #f)))
@@ -106,6 +100,13 @@
           (member 'text classify-lst))
       #t
       #f))
+;;start-skip-spaces: return the position of first non #\space position from current position
+(define (start-skip-spaces txt para)
+  (let* ([para-start (send txt paragraph-start-position para)]
+         [para-end (send txt paragraph-end-position para)])
+    (for/first ([start-skip-space (in-range para-start para-end 1)]
+                #:when (not (equal? #\space (send txt get-character start-skip-space))))
+      start-skip-space)))
 
 ;;delete-end-spaces: delete all #\space at the end of current paragraph
 (define (delete-end-spaces txt para)
@@ -203,6 +204,16 @@
 ;;test cases
 (module+ test
   (require rackunit)
+  
+  ;test start-skip-spaces
+  (check-equal? (let ([t (new racket:text%)])
+                  (send t insert "{abcd\n  efgh\n}")
+                  (start-skip-spaces t 1)) 8)
+  
+  (check-equal? (let ([t (new racket:text%)])
+                  (send t insert "{abc\n       \n}")
+                  (start-skip-spaces t 1)) #f)
+  
   (define txt_1 (new racket:text%))
   (send txt_1 insert "#lang scribble/base\n@f{x}\n@;ghj\ntyty\n\n")
   
@@ -285,7 +296,7 @@
   
   (define txt_11 (new racket:text%))
   (send txt_11 insert "@a[\n     ]\n")
-  (check-equal? (indent-racket-func txt_11 4) 0)      
+  (check-equal? (determine-spaces txt_11 4) 0)      
   
   
   ;;test cases for:delete-end-spaces delete-start-spaces
@@ -302,7 +313,7 @@
                   (send t insert "  {abcde\nfgh\n}")
                   (delete-start-spaces t 0)
                   (send t get-text)) "{abcde\nfgh\n}")
-    
+  
   (check-equal? (let ([t (new racket:text%)])
                   (send t insert "@a[\n      ]\n")
                   (delete-start-spaces t 1)
