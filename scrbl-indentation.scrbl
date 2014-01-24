@@ -35,7 +35,7 @@ current line is in.
    @centered{
     @bold{blah}
     @italic{blah}
-   }
+    }
    }|
                                    
   @sample|{
@@ -47,24 +47,11 @@ current line is in.
 
  ]
 
-@itemlist[ 
-    @item{blah}
-    @item{blah}
-]
-
-Line breaking rules:
-                                   
-1)Only handle string
-inside {} or pure string
+@section{1.2.1 Line breaking rules}
+                                    
+1)Only handle string inside {} or pure string
 
 2)Each paragraph shall not have more/less than given
 character number(e.g. 70). The last few "words" will be
 passed to the next line, or some "words" from the next line
 will be pass back to current line
-
-
-
-
-
-;;;;;;moving ]
-;;;;;;; 

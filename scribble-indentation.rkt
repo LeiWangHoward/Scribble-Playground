@@ -26,7 +26,8 @@
 (define (determine-spaces txt posi)
   (let* ([current-para (send txt position-paragraph posi)]
          [para-start (send txt paragraph-start-position current-para)]
-         [para-start-skip-space (send txt skip-whitespace para-start 'forward #t)]);skip comment also
+         [para-start-skip-space (start-skip-spaces txt current-para 'forward)])
+    ;(send txt skip-whitespace para-start 'forward #t)]);skip comment also
     (if (not (empty-line? txt current-para));not an empty paragraph/comment string
         (let ([sexp-start-posi (send txt backward-containing-sexp para-start-skip-space 0)])
           (if sexp-start-posi
@@ -73,8 +74,8 @@
                                   (send txt delete nxt-para-start 'back)
                                   (send txt insert #\space (sub1 nxt-para-start)))))     
                        #t))))
-              ;;now determine if the next paragraph will be "push up"
-              ((< para-len width) #t);;only consider text
+              ;;do not "push up" the next paragraph
+              ((< para-len width) #t)
               (else #t))
         #t)))
 
@@ -101,23 +102,31 @@
       #t
       #f))
 ;;start-skip-spaces: return the position of first non #\space position from current position
-(define (start-skip-spaces txt para)
+(define (start-skip-spaces txt para direction)
   (let* ([para-start (send txt paragraph-start-position para)]
          [para-end (send txt paragraph-end-position para)])
-    (for/first ([start-skip-space (in-range para-start para-end 1)]
-                #:when (not (equal? #\space (send txt get-character start-skip-space))))
-      start-skip-space)))
+    (if (equal? direction 'forward)
+        (for/first ([start-skip-space (in-range para-start para-end 1)]
+                    #:when (not (equal? #\space (send txt get-character start-skip-space))))
+          start-skip-space)
+        (for/first ([start-skip-space (in-range (sub1 para-end) para-start -1)];;ignore the newline
+                    #:when (not (equal? #\space (send txt get-character start-skip-space))))
+          start-skip-space))))
 
 ;;delete-end-spaces: delete all #\space at the end of current paragraph
 (define (delete-end-spaces txt para)
   (let* ([para-end (send txt paragraph-end-position para)]
-         [last-non-white (send txt skip-whitespace para-end 'backward #f)]);do not skip comment
-    (send txt delete last-non-white para-end)))
+         [last-non-white (start-skip-spaces txt para 'backward)])
+          ;(send txt skip-whitespace para-end 'backward #f)]);do not skip comment
+    (if last-non-white
+        (send txt delete (+ last-non-white 1) para-end)
+        #f)));;not delete last non #/space character
 
-;;delete-end-spaces: delete all #\space at the beginning of current paragraph
+;;delete-start-spaces: delete all #\space at the beginning of current paragraph
 (define (delete-start-spaces txt para)
   (let* ([para-start (send txt paragraph-start-position para)]
-         [first-non-white (send txt skip-whitespace para-start 'forward #f)]);do not skip comment
+         [first-non-white (start-skip-spaces txt para 'forward)]) 
+    ;(send txt skip-whitespace para-start 'forward #f)]);do not skip comment
     (when (> first-non-white para-start)
       (send txt delete para-start first-non-white))))
 
@@ -193,7 +202,8 @@
 
 ;;adjust-spaces for text
 (define (adjust-spaces t para amount posi)
-  (define posi-skip-space (send t skip-whitespace posi 'forward #f));not skip comments
+  (define posi-skip-space (start-skip-spaces t para 'forward))
+  ;(send t skip-whitespace posi 'forward #f));not skip comments
   (define origin-amount (- posi-skip-space posi))
   (when amount
     (send t delete posi posi-skip-space)
@@ -208,11 +218,15 @@
   ;test start-skip-spaces
   (check-equal? (let ([t (new racket:text%)])
                   (send t insert "{abcd\n  efgh\n}")
-                  (start-skip-spaces t 1)) 8)
+                  (start-skip-spaces t 1 'forward)) 8)
   
   (check-equal? (let ([t (new racket:text%)])
                   (send t insert "{abc\n       \n}")
-                  (start-skip-spaces t 1)) #f)
+                  (start-skip-spaces t 1 'forward)) #f)
+  
+  (check-equal? (let ([t (new racket:text%)])
+                  (send t insert "{abc\nefgh   \n}")
+                  (start-skip-spaces t 1 'backward)) 8)
   
   (define txt_1 (new racket:text%))
   (send txt_1 insert "#lang scribble/base\n@f{x}\n@;ghj\ntyty\n\n")
@@ -296,7 +310,7 @@
   
   (define txt_11 (new racket:text%))
   (send txt_11 insert "@a[\n     ]\n")
-  (check-equal? (determine-spaces txt_11 4) 0)      
+  (check-equal? (determine-spaces txt_11 4) 1);;      
   
   
   ;;test cases for:delete-end-spaces delete-start-spaces
