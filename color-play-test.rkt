@@ -86,3 +86,12 @@
                   (send t insert "{abcde   \nfgh\n}")
                   (send t delete 5 9)
                   (send t get-text))
+
+
+#|(check-equal? (let ([t (new racket:text%)])
+                  (send t insert "#lang scribble/base\ntestcase @a{b\n\n\n\n\n      c}\n")
+                  (determine-spaces t 44))
+              12) |#
+
+(displayln #\tab)
+(displayln #\c)

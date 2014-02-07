@@ -1,20 +1,22 @@
 #lang racket
 (require framework)
 
-;;paragraph-indentation : txt[text] posi[natural] width[natural] -> indentation result
+;;paragraph-indentation : txt[text] posi[natural] width[natural] -> void?
 (define (paragraph-indentation txt posi width)
   (let* ([current-line (send txt position-paragraph posi)]
          [para-start-line (for/first ([line (in-range current-line 0 -1)]
                                       #:when (empty-line? txt line))
                             line)])
-    (if para-start-line
-        (for ([i (in-range (+ para-start-line 1) (+ para-start-line 1000) 1)]
-              #:break  (empty-line? txt i))
+    (when para-start-line
+      (send txt begin-edit-sequence)
+      (let loop ([i (+ para-start-line 1)])
+        (unless (empty-line? txt i)
           (define posi (send txt paragraph-start-position i))
           (define amount (determine-spaces txt posi))
-          (begin (adjust-spaces txt i amount posi)
-                 (adjust-para-width txt posi width)))
-        #f)))
+          (adjust-spaces txt i amount posi)
+          (adjust-para-width txt posi width)
+          (loop (+ i 1))))
+      (send txt end-edit-sequence))))
 
 (define (empty-line? txt line)
   (let* ([line-start (send txt paragraph-start-position line)]
@@ -27,13 +29,11 @@
   (let* ([current-para (send txt position-paragraph posi)]
          [para-start (send txt paragraph-start-position current-para)]
          [para-start-skip-space (start-skip-spaces txt current-para 'forward)])
-    ;(send txt skip-whitespace para-start 'forward #t)]);skip comment also
     (if (not (empty-line? txt current-para));not an empty paragraph/comment string
         (let ([sexp-start-posi (send txt backward-containing-sexp para-start-skip-space 0)])
           (if sexp-start-posi
               (let* ((prev-posi (sub1 sexp-start-posi))
                      (this-para (send txt position-paragraph prev-posi)))
-                ;(displayln sexp-start-posi);;test
                 (cond ((equal? #\[ (send txt get-character prev-posi))
                        (let ((this-para-start (send txt paragraph-start-position this-para)))
                          (if (= current-para this-para)
@@ -85,7 +85,7 @@
   (for/list ([x (in-range start end 1)])
     (send txt classify-position x)))
 
-;;is-at-sign?: check if the given position is an @: text position[natural] -> #t/#f
+;;is-at-sign?: check if the given position is an @: text position[natural] -> boolean?
 (define (is-at-sign? txt posi)
   (and (equal? (send txt classify-position posi) 'parenthesis)
        (let-values ([(start end) (send txt get-token-range posi)])
@@ -93,7 +93,7 @@
               (equal? end (+ posi 1))))
        (equal? #\@ (send txt get-character posi))))
 
-;;not-empty?: classify results[list] -> #t/#f
+;;para-not-empty?: classify results[list] -> boolean?
 (define (para-not-empty? classify-lst) ;;we consider 'other  and 'comment as empty
   (if (or (member 'parenthesis classify-lst)
           (member 'string classify-lst)
@@ -107,26 +107,24 @@
          [para-end (send txt paragraph-end-position para)])
     (if (equal? direction 'forward)
         (for/first ([start-skip-space (in-range para-start para-end 1)]
-                    #:when (not (equal? #\space (send txt get-character start-skip-space))))
+                    #:when (not (member (send txt get-character start-skip-space) (list #\space #\tab))))
           start-skip-space)
         (for/first ([start-skip-space (in-range (sub1 para-end) para-start -1)];;ignore the newline
-                    #:when (not (equal? #\space (send txt get-character start-skip-space))))
+                    #:when (not (member (send txt get-character start-skip-space)  (list #\space #\tab))))
           start-skip-space))))
 
 ;;delete-end-spaces: delete all #\space at the end of current paragraph
 (define (delete-end-spaces txt para)
   (let* ([para-end (send txt paragraph-end-position para)]
          [last-non-white (start-skip-spaces txt para 'backward)])
-          ;(send txt skip-whitespace para-end 'backward #f)]);do not skip comment
     (if last-non-white
         (send txt delete (+ last-non-white 1) para-end)
-        #f)));;not delete last non #/space character
+        #f)))
 
 ;;delete-start-spaces: delete all #\space at the beginning of current paragraph
 (define (delete-start-spaces txt para)
   (let* ([para-start (send txt paragraph-start-position para)]
-         [first-non-white (start-skip-spaces txt para 'forward)]) 
-    ;(send txt skip-whitespace para-start 'forward #f)]);do not skip comment
+         [first-non-white (start-skip-spaces txt para 'forward)])
     (when (> first-non-white para-start)
       (send txt delete para-start first-non-white))))
 
@@ -203,7 +201,6 @@
 ;;adjust-spaces for text
 (define (adjust-spaces t para amount posi)
   (define posi-skip-space (start-skip-spaces t para 'forward))
-  ;(send t skip-whitespace posi 'forward #f));not skip comments
   (define origin-amount (- posi-skip-space posi))
   (when amount
     (send t delete posi posi-skip-space)
@@ -228,6 +225,9 @@
                   (send t insert "{abc\nefgh   \n}")
                   (start-skip-spaces t 1 'backward)) 8)
   
+  (check-equal? (let ([t (new racket:text%)])
+                  (send t insert "{abcd\n\t\tefgh\n}");tab
+                  (start-skip-spaces t 1 'forward)) 8)
   (define txt_1 (new racket:text%))
   (send txt_1 insert "#lang scribble/base\n@f{x}\n@;ghj\ntyty\n\n")
   
@@ -271,7 +271,6 @@
   
   (define txt_4 (new racket:text%))
   (send txt_4 insert "#lang scribble/base\n@itemlist[@item{item1}\n@item{item2}\n]")
-  ;;(itemlist (item "item1") (item "item2"))
   (check-equal? (determine-spaces txt_4 22) #f)
   (check-equal? (determine-spaces txt_4 44) 10)
   
@@ -319,6 +318,10 @@
                   (delete-end-spaces t 0)
                   (send t get-text)) "{abcde\nfgh\n}")
   (check-equal? (let ([t (new racket:text%)])
+                  (send t insert "{abcde\t\t\t\t\nfgh\n}")
+                  (delete-end-spaces t 0)
+                  (send t get-text)) "{abcde\nfgh\n}")
+  (check-equal? (let ([t (new racket:text%)])
                   (send t insert "{abcde   \n\n3\n}")
                   (delete-end-spaces t 0)
                   (send t get-text)) "{abcde\n\n3\n}")
@@ -341,6 +344,12 @@
                   (send t get-text)) "@a[\n ]\n")
   
   ;;paragraph indentation
+   (check-equal? (let ([t (new racket:text%)])
+                  (send t insert "#lang scribble/base\ntestcase @a{b\n\n\n\n\n      c}\n")
+                  (paragraph-indentation t 21 12)
+                  (send t get-text))
+                "#lang scribble/base\ntestcase @a{b\n   c}\n")
+  
   
   ;;test case for adjust paragraph width 
   (check-equal? (let ([t (new racket:text%)])
@@ -367,7 +376,7 @@
                   (let ([new-break (insert-break-text t 0 6 14)])
                     (send t delete (add1 new-break) 'back)
                     (send t insert #\newline new-break)
-                    (send t get-text))) "aaa\nbbb ccc ddd");;prefer shorter than width
+                    (send t get-text))) "aaa\nbbb ccc ddd");;prefer shorter than the "width limit"
   
   ;;for the situation there isn't any #\space on right side 
   (check-equal? (let ((t (new racket:text%)))
@@ -376,13 +385,17 @@
                     (send t delete (add1 new-break) 'back)
                     (send t insert #\newline new-break)
                     (send t get-text))) "aaaa\nbbbb") 
-  ;;if @ at the very beginning of the line, it follows the more powerful rule, don't touch it.
-  ;; if it is indented, do something following rules
   )
 
 (provide determine-spaces adjust-para-width paragraph-indentation)
 
 
-;;is-at-sign not good, [] 
-;;don't get actual character
-;; atsign, [text, {text, text 
+
+#|;test case: apsodaposidpaoispdoaiosp @a{sds
+
+
+
+
+
+                                               sdsd} same paragraph!
+     |#

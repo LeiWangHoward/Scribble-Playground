@@ -18,7 +18,9 @@ judgement of @italic{parent parenthesis}. It will perform
 the indentation on each line of code based on two facts:
 check @italic{parent parenthesis} and counting number of
 parenthesis till the outmost @elem["@"] notation that the
-current line is in.
+current line is in. Then the program will put spaces before
+each line of code based on how many @italic{parent parenthesis}
+outside and following rules.
 
 @section{1.1.1 Parenthesis judgement rules} 
 
