@@ -110,7 +110,7 @@
                 (determine-spaces t 28))
                 0)
 
-
+#|
  (let ([t (new racket:text%)])
                   (send t insert "#lang scribble/base\n\ntestcase @a{b\n\n\n\n\n      c}")
                   (send t backward-containing-sexp 38 0))
@@ -119,3 +119,12 @@
  (let ([t (new racket:text%)])
                   (send t insert "#lang scribble/base\nt@a{b\n\n\n\n\n      c  \n\n\n\n     }\n")
                   (send t forward-match 29 -1))
+|#
+
+ (let ([t (new racket:text%)])
+                  (send t insert "#lang scribble/base\n@a{b\n\n  c}")
+                  (send t backward-containing-sexp 26 0))
+
+(let ([t (new racket:text%)])
+                  (send t insert "#lang scribble/base\n@a{\n\n  c}")
+                  (send t backward-containing-sexp 27 0))

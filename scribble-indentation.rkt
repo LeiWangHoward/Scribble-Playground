@@ -52,10 +52,10 @@
                               (add1 (- prev-posi this-para-start)))))
                        ;;if it is inside a racket function and not the first line of the racket function
                        ((equal? #\( (send txt get-character prev-posi))
-                        (indent-racket-func txt prev-posi));call corresponding function to indent racket stuff
+                        (send txt tabify para-start) #f);call corresponding function to indent racket stuff
                        (else (count-parens txt sexp-start-posi)))))
               ((equal? 'text char-classify) 0) ;;0 space if line is just a "outside" text
-              (else sexp-start-posi)));;call tabify
+              (else (send txt tabify para-start) #f)));;call tabify
       #f));;empty line, do nothing 
 
 ;;adjust-para-width : text position[natural] width[natural] -> modify the paragraph of given position if its
