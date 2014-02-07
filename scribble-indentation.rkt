@@ -4,20 +4,30 @@
 ;;paragraph-indentation : txt[text] posi[natural] width[natural] -> void?
 (define (paragraph-indentation txt posi width)
   (let* ([current-line (send txt position-paragraph posi)]
-         [para-start-line (for/first ([line (in-range current-line 0 -1)]
-                                      #:when (empty-line? txt line))
-                            line)])
-    (when para-start-line
-      (send txt begin-edit-sequence)
-      (let loop ([i (+ para-start-line 1)])
-        (unless (empty-line? txt i)
-          (define posi (send txt paragraph-start-position i))
-          (define amount (determine-spaces txt posi))
-          (adjust-spaces txt i amount posi)
-          (adjust-para-width txt posi width)
-          (loop (+ i 1))))
-      (send txt end-edit-sequence))))
+         [guess-start-posi (send txt backward-containing-sexp posi 0)])
+    (if guess-start-posi ;;inside a parenthesis
+        (let* ([guess-start-line (send txt position-paragraph guess-start-posi)])
+               ;;[guess-end-posi (send txt forward-match posi 0)]
+               ;;[guess-end-line (send txt position-paragraph guess-end-posi)])
+          (paragraph-indent-start-end txt guess-start-line width))
+        (paragraph-indent-start-end txt current-line width))));;handle text, no guess boundry
 
+(define (paragraph-indent-start-end txt guess-start width)
+  (define para-start-line (for/first ([line (in-range guess-start 0 -1)]
+                                      #:when (empty-line? txt line))
+                            line))
+  (when para-start-line
+    (send txt begin-edit-sequence)
+    (let loop ([i (+ para-start-line 1)])
+      (unless (empty-line? txt i)
+        (define posi (send txt paragraph-start-position i))
+        (define amount (determine-spaces txt posi))
+        (adjust-spaces txt i amount posi)
+        (adjust-para-width txt posi width)
+        (loop (+ i 1))))
+    (send txt end-edit-sequence)))                              
+
+;;empty-line: text line[natural] -> boolean
 (define (empty-line? txt line)
   (let* ([line-start (send txt paragraph-start-position line)]
          [line-end (send txt paragraph-end-position line)]
@@ -26,25 +36,27 @@
 
 ;;determine-spaces : text position[natural] -> spaces in front of current paragraph (end in "\n")
 (define (determine-spaces txt posi)
-  (let* ([current-para (send txt position-paragraph posi)]
-         [para-start (send txt paragraph-start-position current-para)]
-         [para-start-skip-space (start-skip-spaces txt current-para 'forward)])
-    (if (not (empty-line? txt current-para));not an empty paragraph/comment string
-        (let ([sexp-start-posi (send txt backward-containing-sexp para-start-skip-space 0)])
-          (if sexp-start-posi
-              (let* ((prev-posi (sub1 sexp-start-posi))
-                     (this-para (send txt position-paragraph prev-posi)))
-                (cond ((equal? #\[ (send txt get-character prev-posi))
-                       (let ((this-para-start (send txt paragraph-start-position this-para)))
-                         (if (= current-para this-para)
-                             0
-                             (add1 (- prev-posi this-para-start)))))
-                      ;;if it is inside a racket function and not the first line of the racket function
-                      ((equal? #\( (send txt get-character prev-posi))
-                       (indent-racket-func txt prev-posi));call corresponding function to indent racket stuff
-                      (else (count-parens txt sexp-start-posi))))  
-              sexp-start-posi))
-        #f)))
+  (define current-para (send txt position-paragraph posi))
+  (if (not (empty-line? txt current-para));not an empty paragraph/comment string
+      (let* ([para-start (send txt paragraph-start-position current-para)]
+             [para-start-skip-space (start-skip-spaces txt current-para 'forward)]
+             [char-classify (send txt classify-position para-start-skip-space)]
+             [sexp-start-posi (send txt backward-containing-sexp para-start-skip-space 0)])
+        (cond (sexp-start-posi
+               (let* ((prev-posi (sub1 sexp-start-posi))
+                      (this-para (send txt position-paragraph prev-posi)))
+                 (cond ((equal? #\[ (send txt get-character prev-posi))
+                        (let ((this-para-start (send txt paragraph-start-position this-para)))
+                          (if (= current-para this-para)
+                              0
+                              (add1 (- prev-posi this-para-start)))))
+                       ;;if it is inside a racket function and not the first line of the racket function
+                       ((equal? #\( (send txt get-character prev-posi))
+                        (indent-racket-func txt prev-posi));call corresponding function to indent racket stuff
+                       (else (count-parens txt sexp-start-posi)))))
+              ((equal? 'text char-classify) 0) ;;0 space if line is just a "outside" text
+              (else sexp-start-posi)));;call tabify
+      #f));;empty line, do nothing 
 
 ;;adjust-para-width : text position[natural] width[natural] -> modify the paragraph of given position if its
 ;;                    excedded the width limit, shorter than the limit, or return #f
@@ -349,10 +361,10 @@
   
   ;;paragraph indentation
   (check-equal? (let ([t (new racket:text%)])
-                  (send t insert "#lang scribble/base\ntestcase @a{b\n\n\n\n\n      c}\n")
-                  (paragraph-indentation t 21 12)
+                  (send t insert "#lang scribble/base\n\ntestcase @a{b\n\n\n\n\n      c}\n\n")
+                  (paragraph-indentation t 39 30)
                   (send t get-text))
-                "#lang scribble/base\ntestcase @a{b\n   c}\n")
+                "#lang scribble/base\ntestcase @a{b\n\n\n\n\n c}\n")
   
   (check-equal? (let ([t (new racket:text%)])
                   (send t insert "#lang scribble/base\n\ntest1\n     test2\n\t\ttest3\n")
@@ -397,14 +409,3 @@
   )
 
 (provide determine-spaces adjust-para-width paragraph-indentation)
-
-
-
-#|;test case: apsodaposidpaoispdoaiosp @a{sds
-
-
-
-
-
-                                               sdsd} same paragraph!
-     |#

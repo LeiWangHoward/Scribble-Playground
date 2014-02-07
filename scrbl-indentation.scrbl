@@ -50,7 +50,7 @@ outside and following rules.
 
 @section{1.2.1 Line breaking rules}
                                     
-1)Only handle string inside {} or pure string
+1)Only handle text (inside {} or outside)
 
 2)Each paragraph shall not have more/less than given
 character number(e.g. 70). The last few "words" will be
