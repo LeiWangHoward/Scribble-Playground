@@ -35,16 +35,16 @@
 
 
 (define txt_11 (new racket:text%))
-  (send txt_11 insert "#lang scribble/base\n@a[\n    ]\n")
+(send txt_11 insert "#lang scribble/base\n@a[\n    ]\n")
 
- (let* ([current-para (send txt_11 position-paragraph 24)]
-         [para-start (send txt_11 paragraph-start-position current-para)]
-         [para-start-skip-space (send txt_11 skip-whitespace para-start 'forward #t)]
-         [sexp (send txt_11 backward-containing-sexp para-start-skip-space 0)])
-   (displayln current-para)
-   (displayln para-start)
-   (displayln para-start-skip-space)
-   (displayln sexp))
+(let* ([current-para (send txt_11 position-paragraph 24)]
+       [para-start (send txt_11 paragraph-start-position current-para)]
+       [para-start-skip-space (send txt_11 skip-whitespace para-start 'forward #t)]
+       [sexp (send txt_11 backward-containing-sexp para-start-skip-space 0)])
+  (displayln current-para)
+  (displayln para-start)
+  (displayln para-start-skip-space)
+  (displayln sexp))
 
 (displayln (send txt_11 classify-position 27))
 
@@ -83,9 +83,9 @@
 
 
 (let ([t (new racket:text%)])
-                  (send t insert "{abcde   \nfgh\n}")
-                  (send t delete 5 9)
-                  (send t get-text))
+  (send t insert "{abcde   \nfgh\n}")
+  (send t delete 5 9)
+  (send t get-text))
 
 
 #|(check-equal? (let ([t (new racket:text%)])
@@ -93,5 +93,20 @@
                   (determine-spaces t 44))
               12) |#
 
-(displayln #\tab)
-(displayln #\c)
+;(displayln #\tab)
+
+(define tn (new racket:text%))
+(send tn insert "#lang scribble/base\ntest\ncase @a{b\n\n\n\n\n      c}\n")
+
+#|(let* ([current-line (send tn position-paragraph 25)]
+       [para-start-line (for/first ([line (in-range current-line 0 -1)]
+                                    #:when (or (empty-line? tn line)
+                                               (= line 0)))
+                          line)])
+  (displayln para-start-line))|#
+
+(check-equal? (let ([t (new racket:text%)])
+                (send t insert "#lang scribble/base\n\ntest1\n     test2\n\t\ttest3\n")
+                (determine-spaces t 28))
+                0)
+              

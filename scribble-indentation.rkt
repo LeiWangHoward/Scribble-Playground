@@ -311,6 +311,10 @@
   (send txt_11 insert "@a[\n     ]\n")
   (check-equal? (determine-spaces txt_11 4) 1);;      
   
+  (check-equal? (let ([t (new racket:text%)])
+                  (send t insert "#lang scribble/base\n\ntest1\n     test2\n")
+                  (determine-spaces t 28))
+                0)
   
   ;;test cases for:delete-end-spaces delete-start-spaces
   (check-equal? (let ([t (new racket:text%)])
@@ -344,12 +348,17 @@
                   (send t get-text)) "@a[\n ]\n")
   
   ;;paragraph indentation
-   (check-equal? (let ([t (new racket:text%)])
+  (check-equal? (let ([t (new racket:text%)])
                   (send t insert "#lang scribble/base\ntestcase @a{b\n\n\n\n\n      c}\n")
                   (paragraph-indentation t 21 12)
                   (send t get-text))
                 "#lang scribble/base\ntestcase @a{b\n   c}\n")
   
+  (check-equal? (let ([t (new racket:text%)])
+                  (send t insert "#lang scribble/base\n\ntest1\n     test2\n\t\ttest3\n")
+                  (paragraph-indentation t 22 20)
+                  (send t get-text))
+                "#lang scribble/base\n\ntest1\ntest2\ntest3\n")
   
   ;;test case for adjust paragraph width 
   (check-equal? (let ([t (new racket:text%)])

@@ -2,7 +2,6 @@
 @(require scribble/manual
           scribble/bnf
           (for-label scriblib/figure))
-
 @(define (sample . text) (nested #:style 'inset (apply verbatim text)))
 @(define (result . text) (apply nested #:style 'inset text))
 
