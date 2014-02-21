@@ -4,25 +4,28 @@
 ;;paragraph-indentation : txt[text] posi[natural] width[natural] -> void?
 (define (paragraph-indentation txt posi width)
   (let* ([current-line (send txt position-paragraph posi)]
-         [guess-start-posi (send txt backward-containing-sexp posi 0)])
+         [guess-start-posi (send txt find-up-sexp posi)]);;(send txt backward-containing-sexp posi 0)])
     (if guess-start-posi ;;inside a parenthesis
         (let* ([guess-start-line (send txt position-paragraph guess-start-posi)])
-               ;;[guess-end-posi (send txt forward-match posi 0)]
-               ;;[guess-end-line (send txt position-paragraph guess-end-posi)])
-          (paragraph-indent-start-end txt guess-start-line width))
-        (paragraph-indent-start-end txt current-line width))));;handle text, no guess boundry
+          (displayln guess-start-line)
+          (displayln guess-start-posi)
+          ;;[guess-end-posi (send txt forward-match posi 0)]
+          ;;[guess-end-line (send txt position-paragraph guess-end-posi)])
+          (paragraph-indent-start-end txt guess-start-line current-line width))
+        (paragraph-indent-start-end txt current-line current-line width))));;handle text, no guess boundry
 
-(define (paragraph-indent-start-end txt guess-start width)
+(define (paragraph-indent-start-end txt guess-start current-line width)
   (define para-start-line (for/first ([line (in-range guess-start 0 -1)]
                                       #:when (empty-line? txt line))
                             line))
   (when para-start-line
     (send txt begin-edit-sequence)
     (let loop ([i (+ para-start-line 1)])
-      (unless (empty-line? txt i)
+      (unless (and (empty-line? txt i) (> i current-line))
         (define posi (send txt paragraph-start-position i))
         (define amount (determine-spaces txt posi))
-        (adjust-spaces txt i amount posi)
+        (when amount
+          (adjust-spaces txt i amount posi))
         (adjust-para-width txt posi width)
         (loop (+ i 1))))
     (send txt end-edit-sequence)))                              
@@ -34,6 +37,13 @@
          [line-classify (txt-position-classify txt line-start line-end)])
     (not (para-not-empty? line-classify))))
 
+;;rest-empty?: text line[natural] start[natural] -> boolean
+(define (rest-empty? txt line start)
+  (let* ([line-start (add1 start)]
+         [line-end (send txt paragraph-end-position line)]
+         [line-classify (txt-position-classify txt line-start line-end)])
+    (not (para-not-empty? line-classify))))
+
 ;;determine-spaces : text position[natural] -> spaces in front of current paragraph (end in "\n")
 (define (determine-spaces txt posi)
   (define current-para (send txt position-paragraph posi))
@@ -41,19 +51,20 @@
       (let* ([para-start (send txt paragraph-start-position current-para)]
              [para-start-skip-space (start-skip-spaces txt current-para 'forward)]
              [char-classify (send txt classify-position para-start-skip-space)]
-             [sexp-start-posi (send txt backward-containing-sexp para-start-skip-space 0)])
-        (cond (sexp-start-posi
-               (let* ((prev-posi (sub1 sexp-start-posi))
-                      (this-para (send txt position-paragraph prev-posi)))
+             [prev-posi (send txt find-up-sexp para-start-skip-space)])
+        (cond (prev-posi
+               (let ([this-para (send txt position-paragraph prev-posi)])
                  (cond ((equal? #\[ (send txt get-character prev-posi))
                         (let ((this-para-start (send txt paragraph-start-position this-para)))
                           (if (= current-para this-para)
                               0
-                              (add1 (- prev-posi this-para-start)))))
+                              (if (rest-empty? txt this-para prev-posi)
+                                  1
+                                  (add1 (- prev-posi this-para-start))))))
                        ;;if it is inside a racket function and not the first line of the racket function
                        ((equal? #\( (send txt get-character prev-posi))
                         (send txt tabify para-start) #f);call corresponding function to indent racket stuff
-                       (else (count-parens txt sexp-start-posi)))))
+                       (else (count-parens txt prev-posi)))))
               ((equal? 'text char-classify) 0) ;;0 space if line is just a "outside" text
               (else (send txt tabify para-start) #f)));;call tabify
       #f));;empty line, do nothing 
@@ -143,10 +154,10 @@
 ;;count-parens: text position[natural] ->  number of parens including current one
 (define (count-parens txt posi)
   (define count 0)
-  (do ([p posi (send txt backward-containing-sexp p 0)])
+  (do ([p posi (send txt find-up-sexp p)]);backward-containing-sexp p 0)])
     ((not p) count)
     (begin
-      (set! p (sub1 p))
+      ;(set! p (sub1 p))
       (when (or (equal? #\{ (send txt get-character p))
                 (equal? #\[ (send txt get-character p)))
         (set! count (add1 count))))))
@@ -279,7 +290,7 @@
   (define txt_3 (new racket:text%))
   (send txt_3 insert "#lang scribble/base\n@f[@x\n@y\n]")
   (check-equal? (determine-spaces txt_3 24) #f) 
-  (check-equal? (determine-spaces txt_3 31) 3)
+  (check-equal? (determine-spaces txt_3 27) 3)
   
   (define txt_4 (new racket:text%))
   (send txt_4 insert "#lang scribble/base\n@itemlist[@item{item1}\n@item{item2}\n]")
@@ -315,19 +326,24 @@
   (check-equal? (determine-spaces txt_9 13) #f) 
   (check-equal? (determine-spaces txt_9 4) 1)
   
-  (define txt_10 (new racket:text%))
-  (send txt_10 insert "(d f\n(l [()\n(f ([a (b c)])\n(d e)))])")
-  (check-equal? (indent-racket-func txt_10 12) #f)      
+  (check-equal? (let ([t (new racket:text%)])
+                  (send t insert "(d f\n(l [()\n(f ([a (b c)])\n(d e)))])")
+                  (indent-racket-func t 12)) #f)      
   
-  (define txt_11 (new racket:text%))
-  (send txt_11 insert "@a[\n     ]\n")
-  (check-equal? (determine-spaces txt_11 4) 1);;      
+  (check-equal? (let ([t (new racket:text%)])
+                  (send t insert "@a[\n     ]\n")
+                  (determine-spaces t 4))
+                1)      
   
   (check-equal? (let ([t (new racket:text%)])
                   (send t insert "#lang scribble/base\n\ntest1\n     test2\n")
                   (determine-spaces t 28))
                 0)
   
+  (check-equal? (let ([t (new racket:text%)])
+                  (send t insert "#lang scribble/base\n\ntestcase @a{b\n\n\n\n\n      c}\n\n")
+                  (determine-spaces t 39))
+                1)
   ;;test cases for:delete-end-spaces delete-start-spaces
   (check-equal? (let ([t (new racket:text%)])
                   (send t insert "{abcde   \nfgh\n}")
@@ -362,9 +378,9 @@
   ;;paragraph indentation
   (check-equal? (let ([t (new racket:text%)])
                   (send t insert "#lang scribble/base\n\ntestcase @a{b\n\n\n\n\n      c}\n\n")
-                  (paragraph-indentation t 39 30)
+                  (paragraph-indentation t 39 50)
                   (send t get-text))
-                "#lang scribble/base\ntestcase @a{b\n\n\n\n\n c}\n")
+                "#lang scribble/base\n\ntestcase @a{b\n\n\n\n\n c}\n\n")
   
   (check-equal? (let ([t (new racket:text%)])
                   (send t insert "#lang scribble/base\n\ntest1\n     test2\n\t\ttest3\n")

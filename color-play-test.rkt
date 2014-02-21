@@ -1,6 +1,6 @@
 #lang racket
 (require framework)
-
+#|
 (define (txt-position-classify txt start end)
   (for/list ([x (in-range start end 1)])
     (send txt classify-position x)))
@@ -20,11 +20,12 @@
 
 (define t5 (new racket:text%))
 (send t5 insert "#lang scribble/doc\n@(require \"common.rkt\"\nscribble/decode scribble/eval scribble/struct scribble/racket\n(for-label racket/gui/base framework)\nsetup/getinfo racket/pretty string-constants)")
+|#
 (require "scribble-indentation.rkt")
 (require rackunit)
 
 ;(txt-position-classify t5 0 33)
-
+#|
 (define t6 (new racket:text%))
 (send t6 insert 
       "#lang scribble/base\n@itemlist[ @item{item1}\n@item{item2}\n];")
@@ -47,6 +48,7 @@
   (displayln sexp))
 
 (displayln (send txt_11 classify-position 27))
+|#
 
 #|
 (txt-position-classify t 20 50)
@@ -103,14 +105,14 @@
                                     #:when (or (empty-line? tn line)
                                                (= line 0)))
                           line)])
-  (displayln para-start-line))|#
+  (displayln para-start-line))
 
 (check-equal? (let ([t (new racket:text%)])
                 (send t insert "#lang scribble/base\n\ntest1\n     test2\n\t\ttest3\n")
                 (determine-spaces t 28))
-                0)
+              0)
 
-#|
+
  (let ([t (new racket:text%)])
                   (send t insert "#lang scribble/base\n\ntestcase @a{b\n\n\n\n\n      c}")
                   (send t backward-containing-sexp 38 0))
@@ -121,10 +123,25 @@
                   (send t forward-match 29 -1))
 |#
 
- (let ([t (new racket:text%)])
-                  (send t insert "#lang scribble/base\n@a{b\n\n  c}")
-                  (send t backward-containing-sexp 26 0))
+(let ([t (new racket:text%)])
+  (send t insert "#lang scribble/base\n@a{b\n\n  c}")
+  (send t backward-containing-sexp 26 0))
 
 (let ([t (new racket:text%)])
-                  (send t insert "#lang scribble/base\n@a{\n\n  c}")
-                  (send t backward-containing-sexp 27 0))
+  (send t insert "#lang scribble/base\n@a{\n\n  c}")
+  (send t backward-containing-sexp 27 0))
+
+(let ([t (new racket:text%)])
+  (send t insert "#lang scribble/base\n@a{\n4\n\n\t  c}")
+  (send t skip-whitespace 29 'backward #t))
+
+;;find-up-sexp
+(let ([t (new racket:text%)])
+  (send t insert "#lang scribble/base\n@a{\n'{'\n\n\t  c}")
+  (send t find-up-sexp 29))
+;find-up-sexp
+
+(let ([t (new racket:text%)])
+  (send t insert "#lang scribble/base\n@f[@x\n@y\n]");;"#lang scribble/base\n@a{\n{a} c}")
+  (send t find-up-sexp 24))
+;;;;find-up-sexp
