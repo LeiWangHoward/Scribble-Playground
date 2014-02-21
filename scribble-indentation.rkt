@@ -1,50 +1,58 @@
 #lang racket
 (require framework)
 
-;;paragraph-indentation : txt[text] posi[natural] width[natural] -> void?
+;;(paragraph-indentation a-racket:text posi width) → void?
+;; posi : exact-integer? = current given position
+;; width : exact-integer? = user defined line width limitation
+;; Indent a whole paragraph(multiple lines that contains the given position
 (define (paragraph-indentation txt posi width)
   (let* ([current-line (send txt position-paragraph posi)]
-         [guess-start-posi (send txt find-up-sexp posi)]);;(send txt backward-containing-sexp posi 0)])
+         [guess-start-posi (send txt find-up-sexp posi)])
     (if guess-start-posi ;;inside a parenthesis
         (let* ([guess-start-line (send txt position-paragraph guess-start-posi)])
-          (displayln guess-start-line)
-          (displayln guess-start-posi)
-          ;;[guess-end-posi (send txt forward-match posi 0)]
-          ;;[guess-end-line (send txt position-paragraph guess-end-posi)])
-          (paragraph-indent-start-end txt guess-start-line current-line width))
-        (paragraph-indent-start-end txt current-line current-line width))));;handle text, no guess boundry
+          (paragraph-indent-start txt guess-start-line current-line width))
+        (paragraph-indent-start txt current-line current-line width))));;handle text, no boundry guess
 
-(define (paragraph-indent-start-end txt guess-start current-line width)
+;;(paragraph-indent-start a-racket:text guess-start current-line) → void?
+;; guess-start : exact-integer? = (send text find-up-sexp posi)
+;; current-line : exact-integer? = current line number
+;; Indent a whole paragraph starts with empty line or guess-start, end with empty line
+(define (paragraph-indent-start text guess-start current-line width)
   (define para-start-line (for/first ([line (in-range guess-start 0 -1)]
-                                      #:when (empty-line? txt line))
+                                      #:when (empty-line? text line))
                             line))
   (when para-start-line
-    (send txt begin-edit-sequence)
+    (send text begin-edit-sequence)
     (let loop ([i (+ para-start-line 1)])
-      (unless (and (empty-line? txt i) (> i current-line))
-        (define posi (send txt paragraph-start-position i))
-        (define amount (determine-spaces txt posi))
+      (unless (and (empty-line? text i) (> i current-line))
+        (define posi (send text paragraph-start-position i))
+        (define amount (determine-spaces text posi))
         (when amount
-          (adjust-spaces txt i amount posi))
-        (adjust-para-width txt posi width)
+          (adjust-spaces text i amount posi))
+        (adjust-para-width text posi width)
         (loop (+ i 1))))
-    (send txt end-edit-sequence)))                              
+    (send text end-edit-sequence)))                              
 
-;;empty-line: text line[natural] -> boolean
+;;(empty-line? a-racket:text line) → boolean?
+;; line : exact-integer? = current line number
 (define (empty-line? txt line)
   (let* ([line-start (send txt paragraph-start-position line)]
          [line-end (send txt paragraph-end-position line)]
          [line-classify (txt-position-classify txt line-start line-end)])
     (not (para-not-empty? line-classify))))
 
-;;rest-empty?: text line[natural] start[natural] -> boolean
+;;(rest-empty? a-racket:text line start) → boolean?
+;; line : exact-integer? = (send text position-paragraph start)
+;; start : exact-intefer? = the start position
 (define (rest-empty? txt line start)
   (let* ([line-start (add1 start)]
          [line-end (send txt paragraph-end-position line)]
          [line-classify (txt-position-classify txt line-start line-end)])
     (not (para-not-empty? line-classify))))
 
-;;determine-spaces : text position[natural] -> spaces in front of current paragraph (end in "\n")
+;;(determine-spaces : a-racket:text position) → exact-integer?/boolean?
+;; position : exact-integer? = current position
+;; Return exact integer represents number of #\space to put in front of current paragraph(line) or #f
 (define (determine-spaces txt posi)
   (define current-para (send txt position-paragraph posi))
   (if (not (empty-line? txt current-para));not an empty paragraph/comment string
@@ -69,8 +77,10 @@
               (else (send txt tabify para-start) #f)));;call tabify
       #f));;empty line, do nothing 
 
-;;adjust-para-width : text position[natural] width[natural] -> modify the paragraph of given position if its
-;;                    excedded the width limit, shorter than the limit, or return #f
+;;(adjust-para-width a-racket:text position width) → boolean?
+;; position : exact-integer? = current position 
+;; width : exact-integer? = predefined value
+;;Modify the given paragraph(line) if it exceed width limit by inserting #\newline to proper position
 (define (adjust-para-width txt posi width)
   (let* ([para-num (send txt position-paragraph posi)]
          [para-start (send txt paragraph-start-position para-num)]
@@ -102,13 +112,17 @@
               (else #t))
         #t)))
 
-;;first basic position classify method: text start[natural] end[natural] ->
-;position classify of the text in certain range
+;;(txt-position-classify a-racket:text start end) → void?
+;; start : exact-integer? = position to start classify
+;; end : exact-integer? = position to end classify
+;; Basic position classify method that classify text within certain range
 (define (txt-position-classify txt start end)
   (for/list ([x (in-range start end 1)])
     (send txt classify-position x)))
 
-;;is-at-sign?: check if the given position is an @: text position[natural] -> boolean?
+;;(is-at-sign? a-racket:text posi) → boolean?
+;; posi : exact-integer? = a position in the text
+;; Check if the given position is an @
 (define (is-at-sign? txt posi)
   (and (equal? (send txt classify-position posi) 'parenthesis)
        (let-values ([(start end) (send txt get-token-range posi)])
@@ -116,7 +130,9 @@
               (equal? end (+ posi 1))))
        (equal? #\@ (send txt get-character posi))))
 
-;;para-not-empty?: classify results[list] -> boolean?
+;;(para-not-empty? a-racket:text classify-lst) → boolean?
+;; classify-lst : list? = (txt-position-classify text start end)
+;; Check if current paragraph(line) is empty, we consider comment line as empty line
 (define (para-not-empty? classify-lst) ;;we consider 'other  and 'comment as empty
   (if (or (member 'parenthesis classify-lst)
           (member 'string classify-lst)
@@ -124,7 +140,11 @@
           (member 'text classify-lst))
       #t
       #f))
-;;start-skip-spaces: return the position of first non #\space position from current position
+
+;;(start-skip-spaces a-racket:text para direction) → exact-integer?
+;;para : exact-integer? = paragraph(line) number
+;;direction : symbol? = 'forward/'backward
+;;Return the first non-empty(#\space #\tab) character's position in given paragraph(line)
 (define (start-skip-spaces txt para direction)
   (let* ([para-start (send txt paragraph-start-position para)]
          [para-end (send txt paragraph-end-position para)])
@@ -136,7 +156,9 @@
                     #:when (not (member (send txt get-character start-skip-space)  (list #\space #\tab))))
           start-skip-space))))
 
-;;delete-end-spaces: delete all #\space at the end of current paragraph
+;;(delete-end-spaces a-racket:text para) → void?
+;;para : exact-integer? = paragraph(line) number
+;;Delete all #\space and #\tab at the end of given paragraph
 (define (delete-end-spaces txt para)
   (let* ([para-end (send txt paragraph-end-position para)]
          [last-non-white (start-skip-spaces txt para 'backward)])
@@ -144,25 +166,31 @@
         (send txt delete (+ last-non-white 1) para-end)
         #f)))
 
-;;delete-start-spaces: delete all #\space at the beginning of current paragraph
+;;(delete-start-spaces a-racket:text para) → void?
+;;para : exact-integer? = paragraph(line) number
+;;Delete all #\space and #\tab at the beginning of given paragraph
 (define (delete-start-spaces txt para)
   (let* ([para-start (send txt paragraph-start-position para)]
          [first-non-white (start-skip-spaces txt para 'forward)])
     (when (> first-non-white para-start)
       (send txt delete para-start first-non-white))))
 
-;;count-parens: text position[natural] ->  number of parens including current one
+;;(count-parens a-racket:text posi) → exact-integer?
+;;posi : exact-integer? = a position in given text 
+;;Return number of parenthesis till the outmost @ annotation
 (define (count-parens txt posi)
   (define count 0)
   (do ([p posi (send txt find-up-sexp p)]);backward-containing-sexp p 0)])
     ((not p) count)
     (begin
-      ;(set! p (sub1 p))
       (when (or (equal? #\{ (send txt get-character p))
                 (equal? #\[ (send txt get-character p)))
         (set! count (add1 count))))))
 
-;;indent-racket-func: text position[natural] ->  1 for first #\(, or #f
+;;Deprecated
+;;(indent-racket-fuc a-racket:text posi) → exact-integer?/boolean?
+;;posi : exact-integer? = a position in given text
+;;Return 1 if the position is within first #\( of racket function, or #f
 (define (indent-racket-func txt posi)
   (let* ([prev-posi (sub1 posi)]
          [back-one-level (send txt backward-containing-sexp prev-posi 0)])
@@ -177,7 +205,14 @@
                 (else #f)))
         #f)));;#f needs to be replaced by racket indentation function
 
-;;select-cut-option : text start[natural] end[natural] -> new line generalized [1/0]
+;;(select-cut-option a-racket:text start len width classify-lst) → boolean?
+;; start : exact-integer? = (send text paragraph-start-position given-paragraph-number)
+;; len : exact-integer? = length of current paragraph(line)
+;; width : exact-integer? = predefined value
+;; classify-lst: list? = (txt-position-classify text start end) here end is the end position
+;;               of current paragraph(line)
+;; Put #\newline to shorten given paragraph if necessary, return #t if #\newline inserted
+;; Situations:
 ;;1) breake whole @... to next line, 
 ;;2) keep @.... in current line 
 ;;3) if it is a simple text, just cut it
@@ -201,18 +236,27 @@
                         #t)
                  #f))])))
 
-;;insert-break-text : text start[natural] width-end[natural] end[natural] -> position[natural]/#f
-(define (insert-break-text t start width-end end)
+;;(insert-break-text a-racket:text start width-end end) → exact-integer?/boolean?
+;; start : exact-integer? = (send text paragraph-start-position given-paragraph-number)
+;; width-end : exact-integer? = (+ start width) here width is the user defined line width limit
+;; end : exact-integer? = (send text paragraph-end-position given-paragraph-number)
+;;Return the proper position to insert #\newline into given text line, #f if not found
+(define (insert-break-text text start width-end end)
   (for/first ([break-ls (in-range width-end start -1)]
-              #:when (equal? #\space (send t get-character break-ls)))
+              #:when (equal? #\space (send text get-character break-ls)))
     break-ls))
 
-;;insert-break-func : text start[natural] len[natural] width[natural] classify-result[list] 
-;-> position[natural]/#f
-(define (insert-break-func t start len width classify-lst)
+;;(insert-break-func a-racket:text start len width classify-lst) → exact-integer?/boolean?
+;; start : exact-integer? = (send text paragraph-start-position given-paragraph-number)
+;; len : exact-integer? = length of current paragraph(line)
+;; width : exact-integer? = predefined value
+;; classify-lst: list? = (txt-position-classify text start end) here end is the end position
+;;               of current paragraph(line)
+;;Return the proper position to insert #\newline into given line, #f if not found
+(define (insert-break-func text start len width classify-lst)
   (let ([at-sign-posi
          (for/first ([sign-posi (in-range (+ start width) start -1)]
-                     #:when (is-at-sign? t sign-posi))
+                     #:when (is-at-sign? text sign-posi))
            sign-posi)])
     (if (and at-sign-posi
              (not (equal? 'white-space (list-ref classify-lst (sub1 (- at-sign-posi start))))))
@@ -222,13 +266,20 @@
           posi))))
 
 ;;adjust-spaces for text
-(define (adjust-spaces t para amount posi)
-  (define posi-skip-space (start-skip-spaces t para 'forward))
+;;(adjust-spaces : a-racket:text para amount posi) → boolean?
+;; para : exact-integer? = given paragraph(line) number
+;; amount : exact-integer? = (determine-spaces text posi)
+;; posi : exact-integer? = a position in the text
+;; Delete #\spaces and #\tab in front of given paragraph(line) if not 
+;;  equal to the amount given by determine-spaces. Then insert new amount of #\space
+;;  in front of the paragraph(line)
+(define (adjust-spaces text para amount posi)
+  (define posi-skip-space (start-skip-spaces text para 'forward))
   (define origin-amount (- posi-skip-space posi))
-  (when amount
-    (send t delete posi posi-skip-space)
+  (when (and amount (not (= origin-amount amount)))
+    (send text delete posi posi-skip-space)
     (when (> amount 0)
-      (send t insert (make-string amount #\space) posi))) 
+      (send text insert (make-string amount #\space) posi))) 
   #t)
 
 ;;test cases
