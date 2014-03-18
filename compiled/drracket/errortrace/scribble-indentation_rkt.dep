@@ -1,1 +1,1 @@
-("6.0.0.2" ("eab57d88a9b82c4d93bc2554be47255ef1b2ac60" . "8ad943100ad8b15ab5e6ba0560a6d94ee978a010") (collects #"racket" #"runtime-config.rkt") (collects #"framework" #"main.rkt") (collects #"rackunit" #"main.rkt") (collects #"racket" #"main.rkt"))
+("6.0.0.4" ("8add6d31bde9079df9dbf370da4d99f6926cfae8" . "179f95f1e502b091cd4350aa187f750fb17f42fd") (collects #"racket" #"runtime-config.rkt") (collects #"framework" #"main.rkt") (collects #"rackunit" #"main.rkt") (collects #"racket" #"main.rkt"))

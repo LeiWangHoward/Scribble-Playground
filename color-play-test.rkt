@@ -143,5 +143,12 @@
 
 (let ([t (new racket:text%)])
   (send t insert "#lang scribble/base\n@f[@x\n@y\n]");;"#lang scribble/base\n@a{\n{a} c}")
-  (send t find-up-sexp 24))
+  (send t paragraph-end-position 4))
+  ;;(send t find-up-sexp 24))
 ;;;;find-up-sexp
+
+
+#|(displayln "current:")
+                   (displayln para-end)
+                   (displayln nxt-para-end);;test
+|#
