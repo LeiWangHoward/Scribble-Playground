@@ -147,6 +147,12 @@
   ;;(send t find-up-sexp 24))
 ;;;;find-up-sexp
 
+(define (txt-position-classify txt start end)
+  (for/list ([x (in-range start end 1)])
+    (send txt classify-position x)))
+(let ([t (new racket:text%)])
+  (send t insert "#lang scribble/base\ntest1 test2 @test3\n")
+  (txt-position-classify t 19 100))
 
 #|(displayln "current:")
                    (displayln para-end)

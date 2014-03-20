@@ -201,22 +201,23 @@
   (let* ([para-end (send txt paragraph-end-position para)]
          [new-width (add1 (- para-end para-start))]
          [nxt-para (add1 para)]
-         [nxt-para-start (start-skip-spaces txt para 'forward)]
-         [nxt-para-end (send txt paragraph-end-position nxt-para)]
-         [nxt-para-classify (txt-position-classify txt nxt-para-start nxt-para-end)])
-    (if (or (equal? para-end nxt-para-end) (equal? para-end (sub1 nxt-para-end)))
-        ;;exceed the last paragraph, equal if end without \n, otherwise 1 less
-        #t
-        (if (and (para-not-empty? nxt-para-classify) (equal? (first nxt-para-classify) 'text) 
-                 (< new-width width))
-            ;;we only push back those lines begines with 'text
-            (begin (delete-end-spaces txt para)
-                   (delete-start-spaces txt nxt-para)
-                   (let ([new-nxt-start (send txt paragraph-start-position nxt-para)])
-                     (send txt delete new-nxt-start 'back)
-                     (send txt insert #\space (sub1 new-nxt-start)))
-                   (push-back-lines txt para para-start width)) ;;keep pushing back lines
-            #t)))) ;;done
+         [nxt-para-end (send txt paragraph-end-position nxt-para)])
+    (if (or (equal? para-end nxt-para-end) (equal? para-end (sub1 nxt-para-end))) ;;reach/exceed the last line
+        #t;;all done
+        (let* ([nxt-para-start (start-skip-spaces txt nxt-para 'forward)] 
+               [nxt-para-classify (txt-position-classify txt nxt-para-start nxt-para-end)])
+          (unless (is-at-sign? txt nxt-para-start) ;we do not touch @ 
+            ;(when next paragrah(line)'s first non space character is @)
+            (if (and (para-not-empty? nxt-para-classify) (equal? (car nxt-para-classify) 'text) 
+                     (< new-width width))
+                ;;we only push back those lines begines with 'text
+                (begin (delete-end-spaces txt para)
+                       (delete-start-spaces txt nxt-para)
+                       (let ([new-nxt-start (send txt paragraph-start-position nxt-para)])
+                         (send txt delete new-nxt-start 'back)
+                         (send txt insert #\space (sub1 new-nxt-start)))
+                       (push-back-lines txt para para-start width)) ;;keep pushing back lines
+                #t)))))) ;;done
 
 ;;Deprecated
 ;;(indent-racket-fuc a-racket:text posi) → exact-integer?/boolean?
@@ -319,6 +320,14 @@
   
   ;test start-skip-spaces
   (check-equal? (let ([t (new racket:text%)])
+                  (send t insert "test1 test2\n @test3\n")
+                  (start-skip-spaces t 1 'forward)) 13)
+  
+  (check-equal? (let ([t (new racket:text%)])
+                  (send t insert "{abcd\n@efgh\n}")
+                  (start-skip-spaces t 1 'forward)) 6)
+  
+  (check-equal? (let ([t (new racket:text%)])
                   (send t insert "{abcd\n  efgh\n}")
                   (start-skip-spaces t 1 'forward)) 8)
   
@@ -333,6 +342,7 @@
   (check-equal? (let ([t (new racket:text%)])
                   (send t insert "{abcd\n\t\tefgh\n}");tab
                   (start-skip-spaces t 1 'forward)) 8)
+  
   (define txt_1 (new racket:text%))
   (send txt_1 insert "#lang scribble/base\n@f{x}\n@;ghj\ntyty\n\n")
   
@@ -459,6 +469,12 @@
   
   ;;push-back-lines
   (check-equal? (let ([t (new racket:text%)])
+                  (send t insert "#lang scribble/base\ntest1\n     test2\n @test3\n")
+                  (push-back-lines t 1 20 22)
+                  (send t get-text))
+                "#lang scribble/base\ntest1 test2\n @test3\n")
+  
+  (check-equal? (let ([t (new racket:text%)])
                   (send t insert "#lang scribble/base\ntest1\n     test2\n\t\ttest3\n")
                   (push-back-lines t 1 20 12)
                   (send t get-text))
@@ -502,6 +518,12 @@
                 "#lang scribble/base\n\ntestcase @a{b\n\n\n\n\n c}\n\n")
   
   ;;test case for adjust paragraph width
+  (check-equal? (let ([t (new racket:text%)])
+                  (send t insert "#lang scribble/base\naaa bbb\n @ccc ddd")
+                  (adjust-para-width t 22 12) 
+                  (send t get-text))
+                "#lang scribble/base\naaa bbb\n @ccc ddd")
+  
   (check-equal? (let ([t (new racket:text%)])
                   (send t insert "#lang scribble/base\naaa bbb\nccc ddd @e[f @g{h}]")
                   (adjust-para-width t 22 12) 
