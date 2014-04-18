@@ -183,15 +183,22 @@
 
 ;;(count-parens a-racket:text posi) → exact-integer?
 ;;posi : exact-integer? = a position in given text 
-;;Return number of parenthesis till the outmost @ annotation
+;;Return number of parenthesis till the outmost @ annotation,
+;;if the there is "[", we check if it has "@" after at the same
+;;line, if so, we add the number of characters between "[" and
+;;the beginning of the line it appears
 (define (count-parens txt posi)
   (define count 0)
   (do ([p posi (send txt find-up-sexp p)]);backward-containing-sexp p 0)])
     ((not p) count)
-    (begin
-      (when (or (equal? #\{ (send txt get-character p))
-                (equal? #\[ (send txt get-character p)))
-        (set! count (add1 count))))))
+    (cond [(equal? #\{ (send txt get-character p)) (set! count (add1 count))]
+          [(equal? #\[ (send txt get-character p))
+           (let* ([this-para (send txt position-paragraph p)]
+                  [this-para-start (send txt paragraph-start-position this-para)])
+             (if (rest-empty? txt this-para p)
+                 (set! count (add1 count))
+                 (set! count (+ (add1 (- p this-para-start)) count))))]
+          [else #t])))
 
 ;;(push-back-line a-racket:text para width) → void?
 ;;para : exact-integer? = paragraph(line) number
@@ -206,8 +213,9 @@
         #t;;all done
         (let* ([nxt-para-start (start-skip-spaces txt nxt-para 'forward)] 
                [nxt-para-classify (txt-position-classify txt nxt-para-start nxt-para-end)])
-          (unless (is-at-sign? txt nxt-para-start) ;we do not touch @ 
-            ;(when next paragrah(line)'s first non space character is @)
+          (unless (or (is-at-sign? txt nxt-para-start) (not nxt-para-start)) ;we do not touch @,  
+            ;(when next paragrah(line)'s first non space character is @), or next line empty(start-skip-spaces
+            ;return #f
             (if (and (para-not-empty? nxt-para-classify) (equal? (car nxt-para-classify) 'text) 
                      (< new-width width))
                 ;;we only push back those lines begines with 'text
@@ -407,7 +415,7 @@
   (define txt_8 (new racket:text%))
   (send txt_8 insert "@a{me}\n@b[\n@c{@d{e} f\ng\nh}\n")
   (check-equal? (count-parens txt_8 22) 2)
-  (check-equal? (count-parens txt_8 14) 2)
+  (check-equal? (count-parens txt_8 13) 2);;includes current parenthesis
   (check-equal? (determine-spaces txt_8 22) 2)
   (check-equal? (determine-spaces txt_8 12) 1) 
   
@@ -417,6 +425,15 @@
   (check-equal? (indent-racket-func txt_9 6) #f)
   (check-equal? (determine-spaces txt_9 13) #f) 
   (check-equal? (determine-spaces txt_9 4) 1)
+  
+  ;;count-parens
+  (check-equal? (let ([t (new racket:text%)])
+                  (send t insert "@a[@b{c d\ne f g}\n@h{i j}]")
+                  (count-parens t 5)) 4)
+  
+  (check-equal? (let ([t (new racket:text%)])
+                  (send t insert "@a[@b{\n@c{d e f}\ng}]")
+                  (count-parens t 9)) 5)
   
   (check-equal? (let ([t (new racket:text%)])
                   (send t insert "(d f\n(l [()\n(f ([a (b c)])\n(d e)))])")
@@ -493,6 +510,24 @@
                 "#lang scribble/base\ntest1 test2 test3\n")
   
   ;;paragraph indentation
+  (check-equal? (let ([t (new racket:text%)])
+                  (send t insert "#lang scribble/base\n\n@itemlist[@item{aaa bbb ccc\n                eee fff}\n          @item{ggg hhh iii\n  jjj kkk lll mmm nnn ooo\n  ppp qqq\nrrr\nsss ttt uuu vvv}]")
+                  (paragraph-indentation t 38 29)
+                  (send t get-text))
+                "#lang scribble/base\n\n@itemlist[@item{aaa bbb ccc\n           eee fff}\n          @item{ggg hhh iii\n           jjj kkk lll mmm\n           nnn ooo ppp qqq\n           rrr sss ttt uuu\n           vvv}]")
+  
+  (check-equal? (let ([t (new racket:text%)])
+                  (send t insert "#lang scribble/base\n\n@itemlist[@item{aaa bbb ccc\n                eee fff\n          @item{ggg hhh iii\n  jjj kkk lll mmm nnn ooo\n  ppp qqq\nrrr\nsss ttt uuu vvv}}]")
+                  (paragraph-indentation t 38 29)
+                  (send t get-text))
+                "#lang scribble/base\n\n@itemlist[@item{aaa bbb ccc\n           eee fff\n           @item{ggg hhh iii\n            jjj kkk lll mmm\n            nnn ooo ppp qqq\n            rrr sss ttt uuu\n            vvv}}]")
+  
+  (check-equal? (let ([t (new racket:text%)])
+                  (send t insert "#lang scribble/base\n\n@a{t1\nt2\nt3}\n\n")
+                  (paragraph-indentation t 30 10)
+                  (send t get-text))
+                "#lang scribble/base\n\n@a{t1 t2\n t3}\n\n")
+  
   (check-equal? (let ([t (new racket:text%)])
                   (send t insert "#lang scribble/base\n\ntest1\n     test2\n\t\ttest3\n")
                   (paragraph-indentation t 22 6)
