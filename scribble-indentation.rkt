@@ -206,27 +206,42 @@
 ;; 1) "[" with muptiple lines after
 ;; 2) keyworld "codeblock" or "verbatim"
 ;; otherwise return #t
-(define (push-back-check? text posi)
-  #t)
+(define (push-back-check? t posi)
+  (define key-words (list "codeblock" "verbatim"))
+  (if (is-at-sign? t posi)
+      (let* ([first-char-posi (add1 posi)]
+             [open-paren-posi (send t get-forward-sexp first-char-posi)]);start from the first char after @
+        (cond 
+          [(equal? #\[ (send t get-character open-paren-posi))
+           (let* ([close-paren-posi (sub1 (send t get-forward-sexp open-paren-posi))]
+                  [start-line (send t position-paragraph open-paren-posi)]
+                  [end-line (send t position-paragraph close-paren-posi)])
+             (equal? start-line end-line))]
+          [(equal? #\{ (send t get-character open-paren-posi))
+           (define key-word (send t get-text first-char-posi open-paren-posi))
+           (if (member key-word key-words)
+               #f
+               #t)]
+          [else #f]))
+      #t)) ;; e.g @verbatim|{}|
 ;;(push-back-line a-racket:text para width) → void?
 ;;para : exact-integer? = paragraph(line) number
 ;;para-start : exact-integer? = start position of given paragraph(line)
 ;;width : exact-intefer? = predefined paragrah width
 (define (push-back-lines txt para para-start width)
   (let* ([para-end (send txt paragraph-end-position para)]
-         [new-width (add1 (- para-end para-start))]
+         [new-width (add1 (- para-end para-start))];;init with original line length
          [nxt-para (add1 para)]
          [nxt-para-end (send txt paragraph-end-position nxt-para)])
     (if (or (equal? para-end nxt-para-end) (equal? para-end (sub1 nxt-para-end))) ;;reach/exceed the last line
         #t;;all done
         (let* ([nxt-para-start (start-skip-spaces txt nxt-para 'forward)] 
                [nxt-para-classify (txt-position-classify txt nxt-para-start nxt-para-end)])
-          (unless (or (is-at-sign? txt nxt-para-start) (not nxt-para-start)) ;we do not touch @,  
-            ;(when next paragrah(line)'s first non space character is @), or next line empty(start-skip-spaces
-            ;return #f
-            (if (and (para-not-empty? nxt-para-classify) (equal? (car nxt-para-classify) 'text) 
+          (unless (not nxt-para-start) ;next line empty, start-skip-spaces returns #f
+            (if (and (para-not-empty? nxt-para-classify) (push-back-check? txt nxt-para-start)
+                     (equal? (send txt classify-position (sub1 para-end)) 'text);;previous line end with text 
                      (< new-width width))
-                ;;we only push back those lines begines with 'text
+                ;;we only push back those lines satisfy push-back-check rules
                 (begin (delete-end-spaces txt para)
                        (delete-start-spaces txt nxt-para)
                        (let ([new-nxt-start (send txt paragraph-start-position nxt-para)])
@@ -568,7 +583,7 @@
                   (send t insert "#lang scribble/base\n\n@itemlist[@item{aaa bbb ccc\n                eee fff\n          @item{ggg hhh iii\n  jjj kkk lll mmm nnn ooo\n  ppp qqq\nrrr\nsss ttt uuu vvv}}]")
                   (paragraph-indentation t 38 29)
                   (send t get-text))
-                "#lang scribble/base\n\n@itemlist[@item{aaa bbb ccc\n           eee fff\n           @item{ggg hhh iii\n            jjj kkk lll mmm\n            nnn ooo ppp qqq\n            rrr sss ttt uuu\n            vvv}}]")
+                "#lang scribble/base\n\n@itemlist[@item{aaa bbb ccc\n           eee fff @item{ggg\n            hhh iii jjj kkk\n            lll mmm nnn ooo\n            ppp qqq rrr sss\n            ttt uuu vvv}}]")
   
   (check-equal? (let ([t (new racket:text%)])
                   (send t insert "#lang scribble/base\n\n@a{t1\nt2\nt3}\n\n")

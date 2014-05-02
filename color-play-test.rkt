@@ -158,8 +158,23 @@
                    (displayln para-end)
                    (displayln nxt-para-end);;test
 |#
+#|
 (let ([t (new racket:text%)])
-  (send t insert "#lang scribble/base\n   @f[qweqwe]\n     ")
+  (send t insert "#lang scribble/base\n   @for[qweqwe\n\n\n]  \n     ")
   ;(send t position-paragraph 32))
-(send t get-forward-sexp 25))
+(send t get-forward-sexp 27))|#
 ;;  (send t find-down-sexp 23));;26
+
+(let ([t (new racket:text%)])
+  (send t insert "#lang scribble/base\n@test[@a{}\n@b{}]\n")
+  (send t get-forward-sexp 25))
+  ;(send t get-forward-sexp 25))
+
+(equal? 1 2)
+(equal? 1 1)
+#|
+  (check-equal? (let ([t (new racket:text%)])
+                  (send t insert "#lang scribble/base\n\n@itemlist[@item{aaa bbb ccc\n                eee fff\n          @item{ggg hhh iii\n  jjj kkk lll mmm nnn ooo\n  ppp qqq\nrrr\nsss ttt uuu vvv}}]")
+                  (paragraph-indentation t 38 29)
+                  (send t get-text))
+                "#lang scribble/base\n\n@itemlist[@item{aaa bbb ccc\n           eee fff\n           @item{ggg hhh iii\n            jjj kkk lll mmm\n            nnn ooo ppp qqq\n            rrr sss ttt uuu\n            vvv}}]")|#
