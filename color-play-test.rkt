@@ -158,3 +158,8 @@
                    (displayln para-end)
                    (displayln nxt-para-end);;test
 |#
+(let ([t (new racket:text%)])
+  (send t insert "#lang scribble/base\n   @f[qweqwe]\n     ")
+  ;(send t position-paragraph 32))
+(send t get-forward-sexp 25))
+;;  (send t find-down-sexp 23));;26

@@ -200,6 +200,14 @@
                  (set! count (+ (add1 (- p this-para-start)) count))))]
           [else #t])))
 
+;;(push-back-check? a-racket:text posi) → Boolean?
+;;posi : exact-integer? = a position in given text which is the @'s position 
+;;Return #f if we see:
+;; 1) "[" with muptiple lines after
+;; 2) keyworld "codeblock" or "verbatim"
+;; otherwise return #t
+(define (push-back-check? text posi)
+  #t)
 ;;(push-back-line a-racket:text para width) → void?
 ;;para : exact-integer? = paragraph(line) number
 ;;para-start : exact-integer? = start position of given paragraph(line)
@@ -484,6 +492,39 @@
                   (adjust-spaces t 1 1 4)
                   (send t get-text)) "@a[\n ]\n")
   
+  ;;push-back-check?
+  (check-equal? (let ([t (new racket:text%)])
+                  (send t insert "#lang scribble/base\n@test[@a{}]\n")
+                  (push-back-check? t 20))
+                #t)
+  
+  (check-equal? (let ([t (new racket:text%)])
+                  (send t insert "#lang scribble/base\n@test[@a{}\n@b{}]\n")
+                  (push-back-check? t 20))
+                #f)
+  
+  (check-equal? (let ([t (new racket:text%)])
+                  (send t insert "#lang scribble/base\n @test{}\n@test{}\n")
+                  (push-back-check? t 21))
+                #t)
+  
+  (check-equal? (let ([t (new racket:text%)])
+                  (send t insert "#lang scribble/base\n@codeblockfake{}\n")
+                  (push-back-check? t 20))
+                #t)
+  
+  
+  (check-equal? (let ([t (new racket:text%)])
+                  (send t insert "#lang scribble/base\n\n@codeblock{}\n")
+                  (push-back-check? t 21))
+                #f)
+  
+  
+  (check-equal? (let ([t (new racket:text%)])
+                  (send t insert "#lang scribble/base\n@verbatim{}\n")
+                  (push-back-check? t 20))
+                #f)
+  
   ;;push-back-lines
   (check-equal? (let ([t (new racket:text%)])
                   (send t insert "#lang scribble/base\ntest1\n     test2\n @test3\n")
@@ -509,7 +550,14 @@
                   (send t get-text))
                 "#lang scribble/base\ntest1 test2 test3\n")
   
-  ;;paragraph indentation
+  ;;paragraph indentation  
+  (check-equal? (let ([t (new racket:text%)])
+                  (send t insert "#lang scribble/base\n\naaa bbb ccc\n  @ddd[eee] fff\n ggg hhh iii jjj\n")
+                  (paragraph-indentation t 23 23)
+                  (send t get-text))
+                "#lang scribble/base\n\naaa bbb ccc @ddd[eee]\nfff ggg hhh iii jjj\n")
+  
+  
   (check-equal? (let ([t (new racket:text%)])
                   (send t insert "#lang scribble/base\n\n@itemlist[@item{aaa bbb ccc\n                eee fff}\n          @item{ggg hhh iii\n  jjj kkk lll mmm nnn ooo\n  ppp qqq\nrrr\nsss ttt uuu vvv}]")
                   (paragraph-indentation t 38 29)
